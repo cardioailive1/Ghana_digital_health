@@ -1,0 +1,192 @@
+// ============================================================
+// Prisma Schema — Cardio AI Ghana Digital Health Platform
+// PostgreSQL on Render.com Managed Database
+// HIPAA · SOC 2 · RBAC · Audit logging
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Facilities (hospitals) ────────────────────────────────────
+model Facility {
+  id          String   @id @default(cuid())
+  code        String   @unique  // "KBU", "KAT", "TTH" etc.
+  name        String
+  region      String
+  type        String   @default("teaching")  // teaching | regional | district | chps
+  address     String?
+  phone       String?
+  nhiaId      String?  // NHIA facility code
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  auditLogs   AuditLog[]
+  sessions    Session[]
+
+  @@map("facilities")
+}
+
+// ── Users ────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String?
+  role          String    @default("viewer")
+  // RBAC roles: super_admin | medical_director | doctor | nurse |
+  //             lab_tech | pharmacist | chps_worker | admin | viewer
+
+  facilityId    String?
+  facility      Facility? @relation(fields: [facilityId], references: [id])
+
+  provider      String    @default("local")  // local | google | microsoft
+  oauthId       String?
+
+  mfaEnabled    Boolean   @default(false)
+  mfaSecret     String?
+
+  active        Boolean   @default(true)
+  lastLogin     DateTime?
+  loginCount    Int       @default(0)
+  failedLogins  Int       @default(0)
+  lockedUntil   DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  chatLogs      ChatLog[]
+
+  @@index([email])
+  @@index([facilityId])
+  @@index([role])
+  @@map("users")
+}
+
+// ── Sessions (JWT audit trail) ────────────────────────────────
+// Tracks every issued JWT for SOC 2 CC6 — access provisioning
+model Session {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facilityId  String?
+  facility    Facility? @relation(fields: [facilityId], references: [id])
+
+  jti         String    @unique  // JWT ID claim — enables revocation
+  provider    String    @default("local")
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([jti])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ── Audit Log — HIPAA §164.312(b) ────────────────────────────
+// Every PHI access, login, AI call, NHIS submission logged
+model AuditLog {
+  id           String    @id @default(cuid())
+  action       String    // LOGIN | LOGOUT | PHI_VIEW | AI_CHAT | NHIS_SUBMIT | etc.
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id])
+  facilityId   String?
+  facility     Facility? @relation(fields: [facilityId], references: [id])
+
+  resourceType String?   // patient | auth | platform | iomt_alert | nhis_claim
+  resourceId   String?   // truncated to 64 chars — no raw PHI in logs
+  outcome      String    @default("success") // success | denied | failed
+  ipAddress    String?
+  userAgent    String?
+  requestId    String?   // X-Request-ID for traceability
+
+  metadata     Json?     // extra context — never contains PHI
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([facilityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ── Chat Log — AI conversation history ────────────────────────
+// Stored per user for session continuity — PHI-gated
+model ChatLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facilityId  String?
+
+  role        String   // user | assistant
+  content     String   // encrypted at rest via pg column encryption (pgcrypto)
+  withPHI     Boolean  @default(false)
+  tokenCount  Int?
+  model       String   @default("claude-haiku-4-5-20251001")
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([facilityId])
+  @@index([createdAt])
+  @@map("chat_logs")
+}
+
+// ── NHIS Claims — billing audit trail ────────────────────────
+model NhisClaim {
+  id           String   @id @default(cuid())
+  claimRef     String   @unique  // CLM-2026-XXXXX
+  patientId    String   // Cardio AI PID — no direct patient name
+  facilityId   String
+  icd11Code    String
+  icdDesc      String
+  amount       Decimal  @db.Decimal(10,2)
+  status       String   @default("pending")
+  // pending | submitted | approved | rejected
+  nhiaRef      String?  // NHIA acknowledgement reference
+  rejectionCode String?  // R001–R062
+  confidence   Int?     // AI coding confidence 0–100
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([facilityId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("nhis_claims")
+}
+
+// ── IoMT Alerts — escalation audit trail ──────────────────────
+model IoMTAlert {
+  id           String    @id @default(cuid())
+  deviceId     String
+  patientRef   String    // anonymised patient reference
+  facilityId   String
+  alertType    String    // NEWS2_CRITICAL | HELLP | SEPSIS | PELOD2
+  score        Int?
+  level        String    // CRITICAL | WARNING | LOW
+  vitals       Json?     // snapshot — no direct PHI identifiers
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  escalatedAt    DateTime?
+  resolvedAt     DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([facilityId])
+  @@index([alertType])
+  @@index([createdAt])
+  @@map("iomt_alerts")
+}
