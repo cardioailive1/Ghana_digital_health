@@ -45,4 +45,6 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
     healthCheckPath: /api/health
