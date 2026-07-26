@@ -1,9 +1,3 @@
-// ============================================================
-// Prisma Schema — Cardio AI Ghana Digital Health Platform
-// PostgreSQL on Render.com Managed Database
-// HIPAA · SOC 2 · RBAC · Audit logging
-// ============================================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,51 +7,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Facilities (hospitals) ────────────────────────────────────
 model Facility {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String
-  region      String
-  type        String   @default("teaching")
-  address     String?
-  phone       String?
-  nhiaId      String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  region    String
+  type      String   @default("teaching")
+  address   String?
+  phone     String?
+  nhiaId    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  users       User[]
-  auditLogs   AuditLog[]  @relation("FacilityAuditLogs")
-  sessions    Session[]   @relation("FacilitySessions")
+  users     User[]
+  auditLogs AuditLog[] @relation("FacilityAuditLogs")
+  sessions  Session[]  @relation("FacilitySessions")
 
   @@map("facilities")
 }
 
-// ── Users ─────────────────────────────────────────────────────
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String
-  passwordHash  String?
-  role          String    @default("viewer")
-  facilityId    String?
-  facility      Facility? @relation(fields: [facilityId], references: [id])
-  provider      String    @default("local")
-  oauthId       String?
-  mfaEnabled    Boolean   @default(false)
-  mfaSecret     String?
-  active        Boolean   @default(true)
-  lastLogin     DateTime?
-  loginCount    Int       @default(0)
-  failedLogins  Int       @default(0)
-  lockedUntil   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  passwordHash String?
+  role         String    @default("viewer")
+  facilityId   String?
+  facility     Facility? @relation(fields: [facilityId], references: [id])
+  provider     String    @default("local")
+  oauthId      String?
+  mfaEnabled   Boolean   @default(false)
+  mfaSecret    String?
+  active       Boolean   @default(true)
+  lastLogin    DateTime?
+  loginCount   Int       @default(0)
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  sessions      Session[]
-  auditLogs     AuditLog[]
-  chatLogs      ChatLog[]
+  sessions  Session[]
+  auditLogs AuditLog[]
+  chatLogs  ChatLog[]
 
   @@index([email])
   @@index([facilityId])
@@ -65,20 +57,19 @@ model User {
   @@map("users")
 }
 
-// ── Sessions ──────────────────────────────────────────────────
 model Session {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  facilityId  String?
-  facility    Facility? @relation("FacilitySessions", fields: [facilityId], references: [id])
-  jti         String    @unique
-  provider    String    @default("local")
-  ipAddress   String?
-  userAgent   String?
-  expiresAt   DateTime
-  revokedAt   DateTime?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facilityId String?
+  facility   Facility? @relation("FacilitySessions", fields: [facilityId], references: [id])
+  jti        String    @unique
+  provider   String    @default("local")
+  ipAddress  String?
+  userAgent  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([userId])
   @@index([jti])
@@ -86,7 +77,6 @@ model Session {
   @@map("sessions")
 }
 
-// ── Audit Log ─────────────────────────────────────────────────
 model AuditLog {
   id           String    @id @default(uuid())
   action       String
@@ -110,18 +100,17 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// ── Chat Log ──────────────────────────────────────────────────
 model ChatLog {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  facilityId  String?
-  role        String
-  content     String
-  withPHI     Boolean  @default(false)
-  tokenCount  Int?
-  model       String   @default("claude-haiku-4-5-20251001")
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facilityId String?
+  role       String
+  content    String
+  withPHI    Boolean  @default(false)
+  tokenCount Int?
+  model      String   @default("claude-haiku-4-5-20251001")
+  createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([facilityId])
@@ -129,23 +118,22 @@ model ChatLog {
   @@map("chat_logs")
 }
 
-// ── NHIS Claims ───────────────────────────────────────────────
 model NhisClaim {
-  id            String   @id @default(uuid())
-  claimRef      String   @unique
+  id            String    @id @default(uuid())
+  claimRef      String    @unique
   patientId     String
   facilityId    String
   icd11Code     String
   icdDesc       String
-  amount        Decimal  @db.Decimal(10,2)
-  status        String   @default("pending")
+  amount        Decimal   @db.Decimal(10,2)
+  status        String    @default("pending")
   nhiaRef       String?
   rejectionCode String?
   confidence    Int?
   submittedAt   DateTime?
   approvedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([facilityId])
   @@index([status])
@@ -153,21 +141,20 @@ model NhisClaim {
   @@map("nhis_claims")
 }
 
-// ── IoMT Alerts ───────────────────────────────────────────────
 model IoMTAlert {
-  id              String    @id @default(uuid())
-  deviceId        String
-  patientRef      String
-  facilityId      String
-  alertType       String
-  score           Int?
-  level           String
-  vitals          Json?
-  acknowledgedBy  String?
-  acknowledgedAt  DateTime?
-  escalatedAt     DateTime?
-  resolvedAt      DateTime?
-  createdAt       DateTime  @default(now())
+  id             String    @id @default(uuid())
+  deviceId       String
+  patientRef     String
+  facilityId     String
+  alertType      String
+  score          Int?
+  level          String
+  vitals         Json?
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  escalatedAt    DateTime?
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
 
   @@index([facilityId])
   @@index([alertType])
