@@ -68,17 +68,18 @@ app.use("/api",  aiRoutes);
 app.use("/api/audit",  auditRoute);
 app.use("/api",        platformRoutes);
 
-// ── Static files ──────────────────────────────────────────────
-// Serve platform.html directly (no auth — it's the shell)
-app.use("/platform.html", express.static(path.join(PUBLIC, "platform.html")));
-app.use(express.static(PUBLIC));
-
-// In production, serve Vite build
+// SPA fallback — serve index.html for all non-API routes
 if (isProd) {
-  app.use(express.static(DIST));
-  app.get("*", (req, res) => {
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/auth")) return next();
     res.sendFile(path.join(DIST, "index.html"));
   });
+}
+
+// ── Static files (served before CORS/auth middleware) ─────────
+app.use(express.static(PUBLIC));
+if (isProd) {
+  app.use(express.static(DIST));
 }
 
 // ── Global error handler ──────────────────────────────────────
