@@ -15,9 +15,16 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
 // ── CORS ─────────────────────────────────────────────────────
 export const corsMiddleware = cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // same-origin, health checks
-    if (!isProd) return cb(null, true); // dev: allow all
+    // Allow same-origin, health checks, and static asset requests
+    if (!origin) return cb(null, true);
+    // Allow all in dev
+    if (!isProd) return cb(null, true);
+    // Allow configured origins
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    // Allow any onrender.com subdomain (handles cases where CLIENT_URL not set)
+    if (origin.endsWith(".onrender.com")) return cb(null, true);
+    // Allow localhost for testing
+    if (origin.startsWith("http://localhost")) return cb(null, true);
     logger.warn(`CORS blocked: ${origin}`);
     cb(new Error("Not allowed by CORS"));
   },
