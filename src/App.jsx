@@ -231,7 +231,7 @@ function ClinicalAssistant({ onLogout }) {
                     dangerouslySetInnerHTML={{ __html: md(m.text) }} />
                 </div>
               );
-            }}
+            })}
 
             {retryInfo && (
               <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
