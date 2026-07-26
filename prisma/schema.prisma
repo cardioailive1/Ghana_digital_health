@@ -15,50 +15,43 @@ datasource db {
 
 // ── Facilities (hospitals) ────────────────────────────────────
 model Facility {
-  id          String   @id @default(cuid())
-  code        String   @unique  // "KBU", "KAT", "TTH" etc.
+  id          String   @id @default(uuid())
+  code        String   @unique
   name        String
   region      String
-  type        String   @default("teaching")  // teaching | regional | district | chps
+  type        String   @default("teaching")
   address     String?
   phone       String?
-  nhiaId      String?  // NHIA facility code
+  nhiaId      String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   users       User[]
-  auditLogs   AuditLog[]
-  sessions    Session[]
+  auditLogs   AuditLog[]  @relation("FacilityAuditLogs")
+  sessions    Session[]   @relation("FacilitySessions")
 
   @@map("facilities")
 }
 
-// ── Users ────────────────────────────────────────────────────
+// ── Users ─────────────────────────────────────────────────────
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(uuid())
   email         String    @unique
   name          String
   passwordHash  String?
   role          String    @default("viewer")
-  // RBAC roles: super_admin | medical_director | doctor | nurse |
-  //             lab_tech | pharmacist | chps_worker | admin | viewer
-
   facilityId    String?
   facility      Facility? @relation(fields: [facilityId], references: [id])
-
-  provider      String    @default("local")  // local | google | microsoft
+  provider      String    @default("local")
   oauthId       String?
-
   mfaEnabled    Boolean   @default(false)
   mfaSecret     String?
-
   active        Boolean   @default(true)
   lastLogin     DateTime?
   loginCount    Int       @default(0)
   failedLogins  Int       @default(0)
   lockedUntil   DateTime?
-
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -72,16 +65,14 @@ model User {
   @@map("users")
 }
 
-// ── Sessions (JWT audit trail) ────────────────────────────────
-// Tracks every issued JWT for SOC 2 CC6 — access provisioning
+// ── Sessions ──────────────────────────────────────────────────
 model Session {
-  id          String    @id @default(cuid())
+  id          String    @id @default(uuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   facilityId  String?
-  facility    Facility? @relation(fields: [facilityId], references: [id])
-
-  jti         String    @unique  // JWT ID claim — enables revocation
+  facility    Facility? @relation("FacilitySessions", fields: [facilityId], references: [id])
+  jti         String    @unique
   provider    String    @default("local")
   ipAddress   String?
   userAgent   String?
@@ -95,24 +86,21 @@ model Session {
   @@map("sessions")
 }
 
-// ── Audit Log — HIPAA §164.312(b) ────────────────────────────
-// Every PHI access, login, AI call, NHIS submission logged
+// ── Audit Log ─────────────────────────────────────────────────
 model AuditLog {
-  id           String    @id @default(cuid())
-  action       String    // LOGIN | LOGOUT | PHI_VIEW | AI_CHAT | NHIS_SUBMIT | etc.
+  id           String    @id @default(uuid())
+  action       String
   userId       String?
   user         User?     @relation(fields: [userId], references: [id])
   facilityId   String?
-  facility     Facility? @relation(fields: [facilityId], references: [id])
-
-  resourceType String?   // patient | auth | platform | iomt_alert | nhis_claim
-  resourceId   String?   // truncated to 64 chars — no raw PHI in logs
-  outcome      String    @default("success") // success | denied | failed
+  facility     Facility? @relation("FacilityAuditLogs", fields: [facilityId], references: [id])
+  resourceType String?
+  resourceId   String?
+  outcome      String    @default("success")
   ipAddress    String?
   userAgent    String?
-  requestId    String?   // X-Request-ID for traceability
-
-  metadata     Json?     // extra context — never contains PHI
+  requestId    String?
+  metadata     Json?
   createdAt    DateTime  @default(now())
 
   @@index([userId])
@@ -122,20 +110,17 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// ── Chat Log — AI conversation history ────────────────────────
-// Stored per user for session continuity — PHI-gated
+// ── Chat Log ──────────────────────────────────────────────────
 model ChatLog {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   facilityId  String?
-
-  role        String   // user | assistant
-  content     String   // encrypted at rest via pg column encryption (pgcrypto)
+  role        String
+  content     String
   withPHI     Boolean  @default(false)
   tokenCount  Int?
   model       String   @default("claude-haiku-4-5-20251001")
-
   createdAt   DateTime @default(now())
 
   @@index([userId])
@@ -144,24 +129,23 @@ model ChatLog {
   @@map("chat_logs")
 }
 
-// ── NHIS Claims — billing audit trail ────────────────────────
+// ── NHIS Claims ───────────────────────────────────────────────
 model NhisClaim {
-  id           String   @id @default(cuid())
-  claimRef     String   @unique  // CLM-2026-XXXXX
-  patientId    String   // Cardio AI PID — no direct patient name
-  facilityId   String
-  icd11Code    String
-  icdDesc      String
-  amount       Decimal  @db.Decimal(10,2)
-  status       String   @default("pending")
-  // pending | submitted | approved | rejected
-  nhiaRef      String?  // NHIA acknowledgement reference
-  rejectionCode String?  // R001–R062
-  confidence   Int?     // AI coding confidence 0–100
-  submittedAt  DateTime?
-  approvedAt   DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(uuid())
+  claimRef      String   @unique
+  patientId     String
+  facilityId    String
+  icd11Code     String
+  icdDesc       String
+  amount        Decimal  @db.Decimal(10,2)
+  status        String   @default("pending")
+  nhiaRef       String?
+  rejectionCode String?
+  confidence    Int?
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([facilityId])
   @@index([status])
@@ -169,21 +153,21 @@ model NhisClaim {
   @@map("nhis_claims")
 }
 
-// ── IoMT Alerts — escalation audit trail ──────────────────────
+// ── IoMT Alerts ───────────────────────────────────────────────
 model IoMTAlert {
-  id           String    @id @default(cuid())
-  deviceId     String
-  patientRef   String    // anonymised patient reference
-  facilityId   String
-  alertType    String    // NEWS2_CRITICAL | HELLP | SEPSIS | PELOD2
-  score        Int?
-  level        String    // CRITICAL | WARNING | LOW
-  vitals       Json?     // snapshot — no direct PHI identifiers
-  acknowledgedBy String?
-  acknowledgedAt DateTime?
-  escalatedAt    DateTime?
-  resolvedAt     DateTime?
-  createdAt    DateTime  @default(now())
+  id              String    @id @default(uuid())
+  deviceId        String
+  patientRef      String
+  facilityId      String
+  alertType       String
+  score           Int?
+  level           String
+  vitals          Json?
+  acknowledgedBy  String?
+  acknowledgedAt  DateTime?
+  escalatedAt     DateTime?
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
 
   @@index([facilityId])
   @@index([alertType])
