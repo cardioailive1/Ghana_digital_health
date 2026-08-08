@@ -115,6 +115,45 @@ model Condition {
   @@map("conditions")
 }
 
+model Referral {
+  id             String    @id @default(uuid())
+  patientId      String
+  encounterId    String?
+  fromFacilityId String?
+  toFacilityId   String?
+  reasonCode     String?                          // ICD-11
+  reasonDisplay  String?
+  note           String?
+  urgent         Boolean   @default(false)
+  status         String    @default("active")     // active | completed | revoked
+  authoredAt     DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("referrals")
+}
+
+model Claim {
+  id          String    @id @default(uuid())
+  patientId   String
+  encounterId String?
+  facilityId  String?
+  status      String    @default("draft")         // draft | submitted | approved | rejected
+  diagnoses   Json?                                // [{code, display}]
+  items       Json?                                // [{description, tariffCode, amount}]
+  total       Float     @default(0)
+  serviceDate DateTime
+  nhisVerified Boolean  @default(false)
+  submittedAt DateTime?
+  rejectionCode String?                           // R001..R062
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@map("claims")
+}
+
 model User {
   id           String    @id @default(uuid())
   email        String    @unique

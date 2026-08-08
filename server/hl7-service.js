@@ -27,7 +27,17 @@ const tlsOpts = (process.env.HL7_TLS_KEY && process.env.HL7_TLS_CERT)
   ? { key: process.env.HL7_TLS_KEY, cert: process.env.HL7_TLS_CERT }
   : null;
 
-const handler = makeHl7Handler(prisma, { auditLog });
+async function onCritical({ patient, observation }) {
+  logger.warn(`CRITICAL result: patient=${patient.mrn || patient.id} ${observation.code}=${observation.value}`);
+  try {
+    await prisma.auditLog.create({
+      data: { action: "CRITICAL_RESULT", resourceType: "Observation", resourceId: observation.id, outcome: "critical" },
+    });
+  } catch (_) {}
+  // Escalation pipeline hook: notify on-call / IoMT alert centre here.
+}
+
+const handler = makeHl7Handler(prisma, { auditLog, onCritical });
 const server = new MLLPServer(handler, { tls: tlsOpts });
 
 server.on("message", (hl7) => {

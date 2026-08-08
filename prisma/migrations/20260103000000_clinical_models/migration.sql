@@ -76,3 +76,41 @@ ALTER TABLE "observations" ADD CONSTRAINT "observations_patientId_fkey" FOREIGN 
 ALTER TABLE "observations" ADD CONSTRAINT "observations_encounterId_fkey" FOREIGN KEY ("encounterId") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "conditions" ADD CONSTRAINT "conditions_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "conditions" ADD CONSTRAINT "conditions_encounterId_fkey" FOREIGN KEY ("encounterId") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Referral (FHIR ServiceRequest) and Claim (FHIR Claim) persistence
+CREATE TABLE "referrals" (
+  "id" TEXT NOT NULL,
+  "patientId" TEXT NOT NULL,
+  "encounterId" TEXT,
+  "fromFacilityId" TEXT,
+  "toFacilityId" TEXT,
+  "reasonCode" TEXT,
+  "reasonDisplay" TEXT,
+  "note" TEXT,
+  "urgent" BOOLEAN NOT NULL DEFAULT false,
+  "status" TEXT NOT NULL DEFAULT 'active',
+  "authoredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "referrals_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "referrals_patientId_idx" ON "referrals"("patientId");
+
+CREATE TABLE "claims" (
+  "id" TEXT NOT NULL,
+  "patientId" TEXT NOT NULL,
+  "encounterId" TEXT,
+  "facilityId" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'draft',
+  "diagnoses" JSONB,
+  "items" JSONB,
+  "total" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  "serviceDate" TIMESTAMP(3) NOT NULL,
+  "nhisVerified" BOOLEAN NOT NULL DEFAULT false,
+  "submittedAt" TIMESTAMP(3),
+  "rejectionCode" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "claims_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "claims_patientId_idx" ON "claims"("patientId");
+CREATE INDEX "claims_status_idx" ON "claims"("status");

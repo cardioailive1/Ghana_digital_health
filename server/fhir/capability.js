@@ -18,10 +18,18 @@ export function capabilityStatement() {
       mode: "server",
       security: { description: "Bearer JWT (Authorization header) or session cookie; RBAC enforced." },
       resource: [
-        rt("Patient",     ["read", "search-type", "create"]),
-        rt("Observation", ["search-type", "create"]),
-        rt("Encounter",   ["read", "search-type"]),
-        rt("Condition",   ["search-type"]),
+        rt("Patient",        ["read", "search-type", "create"]),
+        rt("Observation",    ["search-type", "create"]),
+        rt("Encounter",      ["read", "search-type"]),
+        rt("Condition",      ["search-type"]),
+        rt("ServiceRequest", ["search-type", "create"]),
+        rt("Claim",          ["search-type", "create"]),
+        rt("DocumentReference", ["search-type"]),
+      ],
+      operation: [
+        { name: "summary",  definition: "Patient/{id}/$summary (International Patient Summary)" },
+        { name: "finalize", definition: "Encounter/{id}/$finalize (push encounter to SHR + register document)" },
+        { name: "xds-summary", definition: "Patient/{id}/$xds-summary (cross-facility document retrieve)" },
       ],
     }],
   };

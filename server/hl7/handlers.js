@@ -6,6 +6,7 @@
 // persistence is separate (applyAdt / applyOru).
 // ============================================================
 import { HL7Message } from "hl7v2";
+import { isCriticalObservation } from "../fhir/scoring.js";
 
 function val(seg, field, comp) {
   if (!seg) return null;
@@ -88,19 +89,23 @@ export async function applyAdt(prisma, msg) {
   return p;
 }
 
-export async function applyOru(prisma, msg) {
+export async function applyOru(prisma, msg, { onCritical } = {}) {
   const { mrn, observations } = parseOru(msg);
   const p = mrn ? await prisma.patient.findUnique({ where: { mrn } }) : null;
   if (!p) throw new Error(`Unknown patient MRN '${mrn}' — cannot store results`);
   const created = [];
   for (const o of observations) {
-    created.push(await prisma.observation.create({ data: { patientId: p.id, source: "hl7", ...o } }));
+    const row = await prisma.observation.create({ data: { patientId: p.id, source: "hl7", ...o } });
+    created.push(row);
+    if (isCriticalObservation(o) && onCritical) {
+      try { await onCritical({ patient: p, observation: row }); } catch (_) {}
+    }
   }
   return created;
 }
 
 // ── Top-level dispatcher: returns an ACK string ───────────────
-export function makeHl7Handler(prisma, { auditLog } = {}) {
+export function makeHl7Handler(prisma, { auditLog, onCritical } = {}) {
   return async function handle(hl7String) {
     let msg;
     try { msg = HL7Message.parse(hl7String); }
@@ -109,7 +114,7 @@ export function makeHl7Handler(prisma, { auditLog } = {}) {
     const type = (msg.messageType || "").split("^")[0];
     try {
       if (type === "ADT")      await applyAdt(prisma, msg);
-      else if (type === "ORU") await applyOru(prisma, msg);
+      else if (type === "ORU") await applyOru(prisma, msg, { onCritical });
       else return msg.createNak ? msg.createNak("AR", `Unsupported message type ${type}`).toHL7String() : nak(msg, `Unsupported ${type}`);
       if (auditLog) { try { await auditLog(type, msg.controlId); } catch (_) {} }
       return msg.createAck().toHL7String();     // MSA|AA

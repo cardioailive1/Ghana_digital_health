@@ -136,7 +136,148 @@ function prune(obj) {
   return obj;
 }
 
+// ── ServiceRequest (referral) ─────────────────────────────────
+function toFhirServiceRequest(r) {
+  return prune({
+    resourceType: "ServiceRequest",
+    id: r.id,
+    status: r.status || "active",
+    intent: "order",
+    priority: r.urgent ? "urgent" : "routine",
+    code: r.reasonCode ? { coding: [{ system: SYS.icd11, code: r.reasonCode, display: r.reasonDisplay }] } : { text: r.reason || "Referral" },
+    subject: { reference: "Patient/" + r.patientId },
+    encounter: r.encounterId ? { reference: "Encounter/" + r.encounterId } : undefined,
+    requester: r.requesterFacilityId ? { reference: "Organization/" + r.requesterFacilityId } : undefined,
+    performer: r.performerFacilityId ? [{ reference: "Organization/" + r.performerFacilityId }] : undefined,
+    authoredOn: instant(r.authoredAt || new Date()),
+    note: r.note ? [{ text: r.note }] : undefined,
+  });
+}
+
+// ── Claim (NHIA) ──────────────────────────────────────────────
+function toFhirClaim(c) {
+  return prune({
+    resourceType: "Claim",
+    id: c.id,
+    status: c.status || "active",
+    type: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/claim-type", code: "institutional" }] },
+    use: "claim",
+    patient: { reference: "Patient/" + c.patientId },
+    created: instant(c.createdAt || new Date()),
+    insurer: { display: "NHIA" },
+    provider: c.facilityId ? { reference: "Organization/" + c.facilityId } : { display: "Facility" },
+    diagnosis: (c.diagnoses || []).map((d, i) => ({
+      sequence: i + 1,
+      diagnosisCodeableConcept: { coding: [{ system: SYS.icd11, code: d.code, display: d.display }] },
+    })),
+    item: (c.items || []).map((it, i) => ({
+      sequence: i + 1,
+      productOrService: { text: it.description },
+      unitPrice: { value: it.amount, currency: "GHS" },
+      net: { value: it.amount, currency: "GHS" },
+    })),
+    total: { value: (c.items || []).reduce((s, it) => s + (it.amount || 0), 0), currency: "GHS" },
+  });
+}
+
+// ── Composition (SOAP note as a FHIR document section set) ─────
+function toFhirComposition(doc) {
+  const section = (title, code, text) => text ? {
+    title, code: { text: code },
+    text: { status: "generated", div: `<div xmlns="http://www.w3.org/1999/xhtml">${escapeXml(text)}</div>` },
+  } : null;
+  return prune({
+    resourceType: "Composition",
+    id: doc.id,
+    status: "final",
+    type: { coding: [{ system: SYS.loinc, code: "11488-4", display: "Consultation note" }] },
+    subject: { reference: "Patient/" + doc.patientId },
+    encounter: doc.encounterId ? { reference: "Encounter/" + doc.encounterId } : undefined,
+    date: instant(doc.date || new Date()),
+    title: "SOAP Note",
+    section: [
+      section("Subjective", "S", doc.soap?.s),
+      section("Objective", "O", doc.soap?.o),
+      section("Assessment", "A", doc.soap?.a),
+      section("Plan", "P", doc.soap?.p),
+    ].filter(Boolean),
+  });
+}
+
+// ── International Patient Summary (IPS) document bundle ────────
+function buildIps({ patient, conditions = [], observations = [], medications = [] }) {
+  const composition = {
+    resourceType: "Composition",
+    status: "final",
+    type: { coding: [{ system: SYS.loinc, code: "60591-5", display: "Patient summary Document" }] },
+    subject: { reference: "Patient/" + patient.id },
+    date: new Date().toISOString(),
+    title: "International Patient Summary",
+    section: [
+      { title: "Active Problems", entry: conditions.map((c) => ({ reference: "Condition/" + c.id })) },
+      { title: "Results", entry: observations.map((o) => ({ reference: "Observation/" + o.id })) },
+      { title: "Medications", entry: medications.map((m) => ({ reference: "MedicationRequest/" + m.id })) },
+    ],
+  };
+  const resources = [composition, toFhirPatient(patient),
+    ...conditions.map(toFhirCondition), ...observations.map(toFhirObservation)];
+  return {
+    resourceType: "Bundle", type: "document",
+    timestamp: new Date().toISOString(),
+    entry: resources.map((r) => ({ resource: r })),
+  };
+}
+
+// ── Transaction bundle for pushing to the SHR ─────────────────
+function buildTransactionBundle(resources) {
+  return {
+    resourceType: "Bundle", type: "transaction",
+    entry: resources.map((r) => ({
+      resource: r,
+      request: { method: r.id ? "PUT" : "POST", url: r.id ? `${r.resourceType}/${r.id}` : r.resourceType },
+    })),
+  };
+}
+
+// LOINC codes for the common IoMT vitals (used by the IoMT->Observation path)
+const IOMT_VITALS_LOINC = {
+  heartRate:  { code: "8867-4",  display: "Heart rate",        unit: "/min" },
+  spo2:       { code: "59408-5", display: "Oxygen saturation", unit: "%" },
+  respRate:   { code: "9279-1",  display: "Respiratory rate",  unit: "/min" },
+  temp:       { code: "8310-5",  display: "Body temperature",  unit: "Cel" },
+  sbp:        { code: "8480-6",  display: "Systolic BP",        unit: "mm[Hg]" },
+  dbp:        { code: "8462-4",  display: "Diastolic BP",       unit: "mm[Hg]" },
+};
+
+function escapeXml(s) {
+  return String(s).replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+}
+
+// ── DocumentReference (MHD / cross-facility discovery) ────────
+function toFhirDocumentReference(d) {
+  return prune({
+    resourceType: "DocumentReference",
+    id: d.id,
+    status: "current",
+    type: { coding: [{ system: SYS.loinc, code: d.typeCode || "60591-5", display: d.typeDisplay || "Patient summary Document" }] },
+    subject: { reference: "Patient/" + d.patientId },
+    date: instant(d.date || new Date()),
+    custodian: d.facilityId ? { reference: "Organization/" + d.facilityId } : undefined,
+    context: d.encounterId ? { encounter: [{ reference: "Encounter/" + d.encounterId }] } : undefined,
+    content: [{
+      attachment: {
+        contentType: "application/fhir+json",
+        url: d.url || undefined,
+        title: d.title || "Clinical Document",
+      },
+      format: { system: "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem", code: "urn:ihe:iti:xds:2017:mimeTypeSufficient" },
+    }],
+  });
+}
+
 export {
   SYS, toFhirPatient, fromFhirPatient, toFhirEncounter,
   toFhirObservation, toFhirCondition, bundle, operationOutcome,
+  toFhirServiceRequest, toFhirClaim, toFhirComposition, buildIps,
+  buildTransactionBundle, IOMT_VITALS_LOINC, toFhirDocumentReference,
 };
