@@ -14,6 +14,7 @@ import hpp from "hpp";
 
 import logger from "./logger.js";
 import { prisma } from "./db.js";
+import { orgOf } from "./auth.js";
 import {
   corsMiddleware, helmetMiddleware, globalRateLimit,
   sanitizeInput, requestId, securityLogger, phiResponseFilter,
@@ -123,6 +124,37 @@ server.listen(PORT, "0.0.0.0", async () => {
     const userCount = await prisma.user.count();
     logger.info(`PostgreSQL connected — ${userCount} users in database`);
     if (userCount === 0) logger.warn("No users found — run: node server/seed.js");
+
+    // ── Elect the first signup of each organisation as its super_admin ──
+    // Ensures every allowed org that has users but no approved super_admin gets
+    // one (its earliest-created account). Idempotent; fixes pre-existing pending
+    // accounts created before this rule (e.g. the very first sign-up).
+    try {
+      const all = await prisma.user.findMany({
+        orderBy: { createdAt: "asc" },
+        select:  { id: true, email: true, role: true, approvalStatus: true },
+      });
+      const orgs = {};
+      for (const u of all) {
+        const org = orgOf(u.email);
+        if (!org) continue;
+        if (!orgs[org]) orgs[org] = { hasAdmin: false, first: null };
+        if (u.role === "super_admin" && u.approvalStatus === "approved") orgs[org].hasAdmin = true;
+        if (!orgs[org].first) orgs[org].first = u;   // earliest, thanks to asc order
+      }
+      for (const org of Object.keys(orgs)) {
+        const o = orgs[org];
+        if (!o.hasAdmin && o.first) {
+          await prisma.user.update({
+            where: { id: o.first.id },
+            data:  { role: "super_admin", approvalStatus: "approved", active: true, approvedAt: new Date() },
+          });
+          logger.info(`Elected first-signup super_admin for org "${org}": ${o.first.email}`);
+        }
+      }
+    } catch (e) {
+      logger.error("Super-admin election failed", { msg: e.message });
+    }
 
     // ── Bootstrap super admin (idempotent, HIPAA break-glass) ──
     // Set BOOTSTRAP_SUPER_ADMIN_EMAIL to an email that already exists (e.g. a
