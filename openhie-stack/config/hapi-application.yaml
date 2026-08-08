@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://hapi-postgres:5432/hapi
+    username: hapi
+    password: ${HAPI_DB_PASSWORD:hapi}
+    driverClassName: org.postgresql.Driver
+    max-active: 15
+  jpa:
+    properties:
+      hibernate.dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+      hibernate.search.enabled: false
+hapi:
+  fhir:
+    fhir_version: R4
+    default_encoding: json
+    allow_external_references: true
+    allow_multiple_delete: true
+    cors:
+      allow_Credentials: true
+      allowed_origin:
+        - '*'
+    # Enable IHE MHD-style DocumentReference + AuditEvent storage (used by Cardio AI)
+    # Bind auth/TLS at the reverse-proxy / OpenHIM layer.

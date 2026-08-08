@@ -1,0 +1,41 @@
+# ============================================================
+# OpenHIE stack — GOFR (Global Open Facility Registry) ADD-ON
+#   docker compose -f docker-compose.yml -f docker-compose.gofr.yml up -d
+#
+# NOTE: GOFR needs a HAPI FHIR backend (mCSD Location/Organization) + a
+# custom Elasticsearch image with IntraHealth's string-similarity plugin.
+# The stock elasticsearch image will NOT have that plugin — build GOFR's ES
+# image from https://github.com/intrahealth/gofr (Dockerfile-es) and set
+# GOFR_ES_IMAGE in .env, or run GOFR's own compose from that repo. This file
+# wires GOFR to the CORE stack's hapi-fhir; treat it as a starting point.
+# ============================================================
+name: cardioai-openhie
+
+volumes:
+  gofr-es-data:
+
+services:
+  gofr-es:
+    image: ${GOFR_ES_IMAGE:-intrahealth/gofr-es:latest}   # must include the similarity plugin
+    networks: [openhie]
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx1g"
+    volumes: [gofr-es-data:/usr/share/elasticsearch/data]
+    restart: unless-stopped
+
+  gofr-redis:
+    image: redis:${REDIS_TAG:-7-alpine}
+    networks: [openhie]
+    restart: unless-stopped
+
+  gofr:
+    image: intrahealth/gofr:${GOFR_TAG:-latest}
+    depends_on: [gofr-es, gofr-redis, hapi-fhir]
+    networks: [openhie]
+    environment:
+      NODE_ENV: docker
+      HAPI_FHIR_URL: "http://hapi-fhir:8080/fhir/metadata"
+    ports:
+      - "3000:3000"   # GOFR API/UI -> http://<host>:3000
+    restart: unless-stopped

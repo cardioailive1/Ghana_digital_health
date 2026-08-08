@@ -1,0 +1,63 @@
+[
+  {
+    "name": "Cardio AI — SHR (HAPI FHIR)",
+    "urlPattern": "^/fhir/.*$",
+    "methods": ["GET","POST","PUT","DELETE"],
+    "type": "http",
+    "allow": ["cardio-ai"],
+    "routes": [{
+      "name": "hapi-fhir",
+      "host": "hapi-fhir",
+      "port": 8080,
+      "path": "",
+      "pathTransform": "s/^\\/fhir/\\/fhir/",
+      "primary": true,
+      "type": "http"
+    }]
+  },
+  {
+    "name": "Cardio AI — Client Registry (SanteMPI)",
+    "urlPattern": "^/CR/.*$",
+    "methods": ["GET","POST","PUT"],
+    "type": "http",
+    "allow": ["cardio-ai"],
+    "routes": [{
+      "name": "santempi",
+      "host": "santempi",
+      "port": 8080,
+      "pathTransform": "s/^\\/CR//",
+      "primary": true,
+      "type": "http"
+    }]
+  },
+  {
+    "name": "Cardio AI — Facility Registry (GOFR)",
+    "urlPattern": "^/FR/.*$",
+    "methods": ["GET","POST"],
+    "type": "http",
+    "allow": ["cardio-ai"],
+    "routes": [{
+      "name": "gofr",
+      "host": "gofr",
+      "port": 3000,
+      "pathTransform": "s/^\\/FR//",
+      "primary": true,
+      "type": "http"
+    }]
+  },
+  {
+    "name": "Cardio AI — HMIS (DHIS2)",
+    "urlPattern": "^/dhis/.*$",
+    "methods": ["GET","POST","PUT"],
+    "type": "http",
+    "allow": ["cardio-ai"],
+    "routes": [{
+      "name": "dhis2",
+      "host": "dhis2-core",
+      "port": 8080,
+      "pathTransform": "s/^\\/dhis//",
+      "primary": true,
+      "type": "http"
+    }]
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "protocol": "https",
+  "host": "localhost",
+  "port": 5001,
+  "hostPath": "",
+  "loginBanner": "Cardio AI Ghana — OpenHIE Interoperability Layer",
+  "footerTitle": "Cardio AI OpenHIM",
+  "footerPoweredBy": "OpenHIM"
+}

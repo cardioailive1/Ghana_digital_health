@@ -1,0 +1,139 @@
+# ============================================================
+# OpenHIE stack for Cardio AI Ghana — CORE
+#   OpenHIM (IOL)  · HAPI FHIR (SHR)  · SanteMPI (CR/MPI)  · DHIS2 (HMIS)
+# Runs on a Docker host (VM / k8s) — NOT on Render. Cardio AI (Render)
+# connects OUT to this host over HTTPS.
+#
+#   cp .env.example .env      # then edit passwords + versions
+#   docker compose up -d
+#   ./scripts/init-openhim.sh # register OpenHIM channels (routing)
+#
+# Minimum host: 16 GB RAM, 4 vCPU, 60 GB disk. Put a TLS reverse proxy in front.
+# Verify every image tag on Docker Hub before production; they are pinned via .env.
+# ============================================================
+name: cardioai-openhie
+
+networks:
+  openhie:
+
+volumes:
+  mongo-data:
+  hapi-pg-data:
+  santempi-data:
+  dhis2-pg-data:
+  dhis2-files:
+
+services:
+  # ── OpenHIM (Interoperability Layer) ──────────────────────
+  mongo:
+    image: mongo:${MONGO_TAG:-4.2}
+    networks: [openhie]
+    volumes: [mongo-data:/data/db]
+    restart: unless-stopped
+
+  openhim-core:
+    image: jembi/openhim-core:${OPENHIM_CORE_TAG:-8}
+    depends_on: [mongo]
+    networks: [openhie]
+    environment:
+      mongo_url: "mongodb://mongo/openhim"
+      mongo_atnaUrl: "mongodb://mongo/openhim"
+      NODE_ENV: "${OPENHIM_NODE_ENV:-development}"   # 'production' once real TLS certs are mounted
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-sf", "https://localhost:8080/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    ports:
+      - "5000:5000"   # secure transaction port (HTTPS) — the HIE front door
+      - "5001:5001"   # API
+      - "5050:5050"
+      - "5051:5051"
+      - "5052:5052"
+    restart: unless-stopped
+
+  openhim-console:
+    image: jembi/openhim-console:${OPENHIM_CONSOLE_TAG:-latest}
+    depends_on: [openhim-core]
+    networks: [openhie]
+    volumes:
+      - ./config/openhim-console.json:/usr/share/nginx/html/config/default.json:ro
+    ports:
+      - "9000:80"     # OpenHIM admin console UI
+    restart: unless-stopped
+
+  # ── HAPI FHIR — Shared Health Record (SHR) ────────────────
+  hapi-postgres:
+    image: postgres:${POSTGRES_TAG:-15-alpine}
+    networks: [openhie]
+    environment:
+      POSTGRES_DB: hapi
+      POSTGRES_USER: ${HAPI_DB_USER:-hapi}
+      POSTGRES_PASSWORD: ${HAPI_DB_PASSWORD:?set HAPI_DB_PASSWORD in .env}
+    volumes: [hapi-pg-data:/var/lib/postgresql/data]
+    restart: unless-stopped
+
+  hapi-fhir:
+    image: hapiproject/hapi:${HAPI_TAG:-v6.8.0}
+    depends_on: [hapi-postgres]
+    networks: [openhie]
+    volumes:
+      - ./config/hapi-application.yaml:/app/config/application.yaml:ro
+    environment:
+      SPRING_CONFIG_LOCATION: "file:///app/config/application.yaml"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://hapi-postgres:5432/hapi"
+      SPRING_DATASOURCE_USERNAME: "${HAPI_DB_USER:-hapi}"
+      SPRING_DATASOURCE_PASSWORD: "${HAPI_DB_PASSWORD}"
+      SPRING_DATASOURCE_DRIVERCLASSNAME: "org.postgresql.Driver"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/fhir/metadata"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+    ports:
+      - "8081:8080"   # SHR FHIR base -> http://<host>:8081/fhir
+    restart: unless-stopped
+
+  # ── SanteMPI — Client Registry / Master Patient Index ─────
+  santempi:
+    image: santesuite/santedb-mpi:${SANTEMPI_TAG:-latest}
+    networks: [openhie]
+    volumes: [santempi-data:/santedb/data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/fhir/metadata || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+    ports:
+      - "8082:8080"   # SanteMPI FHIR + OIDC -> http://<host>:8082/fhir
+      - "2100:2100"   # HL7 v2 / device endpoint
+    restart: unless-stopped
+
+  # ── DHIS2 — HMIS / aggregate surveillance target ──────────
+  dhis2-db:
+    image: postgis/postgis:${POSTGIS_TAG:-14-3.3}
+    networks: [openhie]
+    environment:
+      POSTGRES_DB: dhis2
+      POSTGRES_USER: ${DHIS2_DB_USER:-dhis}
+      POSTGRES_PASSWORD: ${DHIS2_DB_PASSWORD:?set DHIS2_DB_PASSWORD in .env}
+    volumes: [dhis2-pg-data:/var/lib/postgresql/data]
+    restart: unless-stopped
+
+  dhis2-core:
+    image: dhis2/core:${DHIS2_TAG:-2.40.4.1}
+    depends_on: [dhis2-db]
+    networks: [openhie]
+    volumes:
+      - ./config/dhis.conf:/opt/dhis2/dhis.conf:ro
+      - dhis2-files:/opt/dhis2/files
+    environment:
+      DHIS2_HOME: /opt/dhis2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/system/info.json || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 30
+    ports:
+      - "8083:8080"   # DHIS2 -> http://<host>:8083 (default admin/district)
+    restart: unless-stopped

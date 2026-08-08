@@ -91,7 +91,7 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 
 ## Next / not done (tracked backlog)
 
-1. **#6 Stand up external services (CRITICAL for client)** — Docker/deploy OpenHIM v8.4, SanteMPI v3.3, HAPI FHIR v6.8, GOFR v2.1, DHIS2; wire URLs above. *Ops, not app code.*
+1. **#6 Stand up external services (CRITICAL for client)** — ✅ **deploy artifacts built**: `openhie-stack/` has docker-compose for OpenHIM v8, HAPI FHIR v6.8 (SHR), SanteMPI (CR/MPI), DHIS2, and a GOFR add-on, plus OpenHIM channel registration and a bring-up guide. **Remaining:** run it on a Docker host (VM/k8s), change defaults, add TLS, set the Cardio AI env URLs (§6 of `openhie-stack/README.md`). *Ops — can't be executed from the app repo.*
 2. **Offline-first CHPS sync** — 2G, 48h buffer, conflict resolution. *Not built.*
 3. **Live NHIA claims submission API** — currently validate-only.
 4. **ICD-11 auto-assignment** — AI produces the code; bridge stores it. Wire the AI output into `Condition.code`.
