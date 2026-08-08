@@ -185,6 +185,44 @@ export async function localLogin(email, password, req) {
   return { token, user: sanitizeUser(user) };
 }
 
+// ── Local registration (self-service, org-restricted, PENDING) ──
+// Creates a local account that CANNOT sign in until a Super Admin approves.
+export async function registerLocal({ name, email, password }, req) {
+  email = (email || "").toLowerCase().trim();
+  name  = (name  || "").trim();
+  password = password || "";
+
+  if (!name || !email || !password) {
+    const e = new Error("Full name, email and password are required"); e.status = 400; throw e;
+  }
+  // Organisation restriction (HIPAA): only approved org domains / test emails.
+  if (!isEmailAllowed(email)) {
+    auditLog("REGISTER_DENIED_DOMAIN", null, null, "auth", email, "local");
+    const e = new Error("This email is not authorised for this organisation"); e.status = 403; throw e;
+  }
+  if (password.length < 8) {
+    const e = new Error("Password must be at least 8 characters"); e.status = 400; throw e;
+  }
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    const e = new Error("An account with this email already exists"); e.status = 409; throw e;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const user = await prisma.user.create({
+    data: {
+      email, name, passwordHash,
+      role: ROLES.VIEWER,
+      provider: "local",
+      active: true,
+      approvalStatus: "pending",   // must be approved by a Super Admin
+    },
+  });
+  auditLog("USER_REGISTERED", user.id, null, "auth", email, "pending");
+  logger.info(`New local registration pending approval: ${email}`);
+  return { status: "pending", email };
+}
+
 // ── OAuth upsert ──────────────────────────────────────────────
 // Returns { status, user, token }.
 //   status "approved" → token issued (caller sets cookie, redirects success)

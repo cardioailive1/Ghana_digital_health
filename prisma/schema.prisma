@@ -40,6 +40,9 @@ model User {
   mfaEnabled   Boolean   @default(false)
   mfaSecret    String?
   active       Boolean   @default(true)
+  approvalStatus String  @default("pending")   // pending | approved | rejected
+  approvedById String?
+  approvedAt   DateTime?
   lastLogin    DateTime?
   loginCount   Int       @default(0)
   failedLogins Int       @default(0)
@@ -54,6 +57,7 @@ model User {
   @@index([email])
   @@index([facilityId])
   @@index([role])
+  @@index([approvalStatus])
   @@map("users")
 }
 

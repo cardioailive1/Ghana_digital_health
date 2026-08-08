@@ -412,10 +412,12 @@ tr:last-child td{border-bottom:none}
       .then(function () { clearToken(); window.location.replace("/"); });
   };
 
-  // ── Handle Google OAuth redirect: /?auth=success | /?auth=fail ──
+  // ── Handle Google OAuth redirect: /?auth=success|pending|denied|fail ──
   function handleOAuthReturn(cb) {
     var params = new URLSearchParams(window.location.search);
     var status = params.get("auth");
+    if (!status) return null;
+
     if (status === "success") {
       // Cookie is already set by the server; exchange it for a token.
       fetch("/auth/me", { credentials: "include" })
@@ -426,24 +428,61 @@ tr:last-child td{border-bottom:none}
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (tok) {
               if (tok && tok.token) storeToken(tok.token);
-              // Clean the URL, then reload so the platform boots authenticated.
               window.history.replaceState({}, "", window.location.pathname);
               window.location.reload();
             });
         })
         .catch(function () {
           window.history.replaceState({}, "", window.location.pathname);
-          cb(false, "Google sign-in did not complete. Please try again.");
+          cb("login", "Google sign-in did not complete. Please try again.");
         });
-      return true; // handling in progress
+      return "pending-network"; // async in progress
     }
-    if (status === "fail") {
-      var reason = params.get("reason") || "";
-      window.history.replaceState({}, "", window.location.pathname);
-      cb(false, "Google sign-in failed" + (reason ? " (" + decodeURIComponent(reason) + ")" : "") + ".");
-      return false;
+
+    window.history.replaceState({}, "", window.location.pathname);
+
+    if (status === "pending") {
+      cb("message", {
+        title: "Account awaiting approval",
+        body: "Your account was created and is pending administrator approval. " +
+              "A Super Admin must approve access before you can sign in. " +
+              "You will be able to sign in once approved."
+      });
+      return "handled";
     }
-    return null; // no OAuth return present
+    if (status === "denied") {
+      cb("message", {
+        title: "Access denied",
+        body: "This email address is not authorised for the Cardio AI platform, " +
+              "or the account has been deactivated. Access is restricted to approved " +
+              "organisation accounts. Contact your administrator if you believe this is an error."
+      });
+      return "handled";
+    }
+    // status === "fail"
+    var reason = params.get("reason") || "";
+    cb("login", "Google sign-in failed" + (reason ? " (" + decodeURIComponent(reason) + ")" : "") + ".");
+    return "handled";
+  }
+
+  // ── Full-screen message screen (pending / denied) ─────────────
+  function showMessageScreen(info) {
+    if (document.getElementById("cai-auth-gate")) document.getElementById("cai-auth-gate").remove();
+    var wrap = document.createElement("div");
+    wrap.id = "cai-auth-gate";
+    wrap.setAttribute("style",
+      "position:fixed;inset:0;z-index:99999;background:radial-gradient(1200px 600px at 50% -10%,#12243a,#08131f 60%);" +
+      "display:flex;align-items:center;justify-content:center;font-family:'DM Sans',system-ui,sans-serif;");
+    wrap.innerHTML =
+      '<div style="width:400px;max-width:92vw;background:#0d1c2e;border:1px solid #1c3554;border-radius:16px;padding:30px 28px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.5)">' +
+        '<div style="width:44px;height:44px;margin:0 auto 14px;border-radius:11px;background:linear-gradient(135deg,#0d9488,#1565C0);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-family:Syne,sans-serif;font-size:20px">C</div>' +
+        '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:18px;color:#e8f0fb;margin-bottom:10px">' + info.title + '</div>' +
+        '<div style="font-size:13px;color:#93a4bd;line-height:1.6;margin-bottom:20px">' + info.body + '</div>' +
+        '<button id="cai-back-login" style="background:#152a44;color:#cfe0f5;border:1px solid #1c3554;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">Back to sign in</button>' +
+      '</div>';
+    (document.body || document.documentElement).appendChild(wrap);
+    var b = document.getElementById("cai-back-login");
+    if (b) b.addEventListener("click", function () { wrap.remove(); showOverlay(""); });
   }
 
   // ── Login overlay UI ──────────────────────────────────────────
@@ -453,22 +492,47 @@ tr:last-child td{border-bottom:none}
     wrap.setAttribute("style",
       "position:fixed;inset:0;z-index:99999;background:radial-gradient(1200px 600px at 50% -10%,#12243a,#08131f 60%);" +
       "display:flex;align-items:center;justify-content:center;font-family:'DM Sans',system-ui,sans-serif;");
+    var inp = "width:100%;background:#08131f;border:1px solid #1c3554;border-radius:9px;padding:10px 12px;color:#e8f0fb;font-size:13.5px;margin-bottom:12px;outline:none";
+    var lbl = "display:block;font-size:11px;font-weight:700;color:#93a4bd;margin-bottom:5px";
+    var primaryBtn = "width:100%;background:linear-gradient(135deg,#0d9488,#1565C0);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13.5px;font-weight:700;cursor:pointer";
+    var toggleLine = "font-size:12px;color:#64748b;text-align:center;margin-top:12px";
+    var linkStyle = "color:#5aa0e6;font-weight:700;cursor:pointer;text-decoration:none";
     wrap.innerHTML =
       '<div style="width:360px;max-width:92vw;background:#0d1c2e;border:1px solid #1c3554;border-radius:16px;padding:28px 26px;box-shadow:0 24px 60px rgba(0,0,0,.5)">' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
           '<div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#0d9488,#1565C0);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-family:Syne,sans-serif">C</div>' +
           '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:17px;color:#e8f0fb">Cardio AI Ghana</div>' +
         '</div>' +
-        '<div style="font-size:12.5px;color:#64748b;margin:0 0 18px 44px">Digital Health Platform — sign in to continue</div>' +
-        '<label style="display:block;font-size:11px;font-weight:700;color:#93a4bd;margin-bottom:5px">EMAIL</label>' +
-        '<input id="cai-email" type="email" autocomplete="username" placeholder="doctor@kbu.cardioai.gh" ' +
-          'style="width:100%;background:#08131f;border:1px solid #1c3554;border-radius:9px;padding:10px 12px;color:#e8f0fb;font-size:13.5px;margin-bottom:12px;outline:none">' +
-        '<label style="display:block;font-size:11px;font-weight:700;color:#93a4bd;margin-bottom:5px">PASSWORD</label>' +
-        '<input id="cai-pass" type="password" autocomplete="current-password" placeholder="••••••••" ' +
-          'style="width:100%;background:#08131f;border:1px solid #1c3554;border-radius:9px;padding:10px 12px;color:#e8f0fb;font-size:13.5px;margin-bottom:8px;outline:none">' +
-        '<div id="cai-auth-msg" style="min-height:16px;font-size:12px;color:#fca5a5;margin-bottom:8px"></div>' +
-        '<button id="cai-login-btn" ' +
-          'style="width:100%;background:linear-gradient(135deg,#0d9488,#1565C0);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13.5px;font-weight:700;cursor:pointer">Sign in</button>' +
+        '<div id="cai-auth-sub" style="font-size:12.5px;color:#64748b;margin:0 0 18px 44px">Digital Health Platform — sign in to continue</div>' +
+
+        // ── LOGIN SECTION ──
+        '<div id="cai-login-section">' +
+          '<label style="' + lbl + '">EMAIL</label>' +
+          '<input id="cai-email" type="email" autocomplete="username" placeholder="you@cardioai.gh" style="' + inp + '">' +
+          '<label style="' + lbl + '">PASSWORD</label>' +
+          '<input id="cai-pass" type="password" autocomplete="current-password" placeholder="••••••••" style="' + inp + ';margin-bottom:8px">' +
+          '<div id="cai-auth-msg" style="min-height:16px;font-size:12px;color:#fca5a5;margin-bottom:8px"></div>' +
+          '<button id="cai-login-btn" style="' + primaryBtn + '">Sign in</button>' +
+          '<div style="' + toggleLine + '">Need access? <a id="cai-to-register" style="' + linkStyle + '">Create an account</a></div>' +
+        '</div>' +
+
+        // ── REGISTER SECTION (hidden until toggled) ──
+        '<div id="cai-register-section" style="display:none">' +
+          '<label style="' + lbl + '">FULL NAME</label>' +
+          '<input id="cai-reg-name" type="text" autocomplete="name" placeholder="Dr. Ama Mensah" style="' + inp + '">' +
+          '<label style="' + lbl + '">ORGANISATION EMAIL</label>' +
+          '<input id="cai-reg-email" type="email" autocomplete="email" placeholder="you@cardioai.gh" style="' + inp + '">' +
+          '<label style="' + lbl + '">PASSWORD <span style="color:#475569;font-weight:400">(min 8 characters)</span></label>' +
+          '<input id="cai-reg-pass" type="password" autocomplete="new-password" placeholder="••••••••" style="' + inp + '">' +
+          '<label style="' + lbl + '">CONFIRM PASSWORD</label>' +
+          '<input id="cai-reg-confirm" type="password" autocomplete="new-password" placeholder="••••••••" style="' + inp + ';margin-bottom:8px">' +
+          '<div id="cai-reg-msg" style="min-height:16px;font-size:12px;color:#fca5a5;margin-bottom:8px"></div>' +
+          '<button id="cai-register-btn" style="' + primaryBtn + '">Create account</button>' +
+          '<div style="font-size:11px;color:#475569;text-align:center;margin-top:8px;line-height:1.5">New accounts require administrator approval before first sign-in.</div>' +
+          '<div style="' + toggleLine + '">Already have an account? <a id="cai-to-login" style="' + linkStyle + '">Sign in</a></div>' +
+        '</div>' +
+
+        // ── SHARED: Google OAuth ──
         '<div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#3a4c66;font-size:11px">' +
           '<div style="flex:1;height:1px;background:#1c3554"></div>OR<div style="flex:1;height:1px;background:#1c3554"></div></div>' +
         '<button id="cai-google-btn" ' +
@@ -488,15 +552,42 @@ tr:last-child td{border-bottom:none}
     var msgEl   = document.getElementById("cai-auth-msg");
     var loginBtn  = document.getElementById("cai-login-btn");
     var googleBtn = document.getElementById("cai-google-btn");
+    var loginSec  = document.getElementById("cai-login-section");
+    var regSec    = document.getElementById("cai-register-section");
+    var subEl     = document.getElementById("cai-auth-sub");
+    var toReg     = document.getElementById("cai-to-register");
+    var toLogin   = document.getElementById("cai-to-login");
+    // register fields
+    var regName = document.getElementById("cai-reg-name");
+    var regEmail= document.getElementById("cai-reg-email");
+    var regPass = document.getElementById("cai-reg-pass");
+    var regConf = document.getElementById("cai-reg-confirm");
+    var regMsg  = document.getElementById("cai-reg-msg");
+    var regBtn  = document.getElementById("cai-register-btn");
+
     if (initialMsg) msgEl.textContent = initialMsg;
 
-    function setMsg(t, ok) { msgEl.style.color = ok ? "#4ade80" : "#fca5a5"; msgEl.textContent = t || ""; }
+    function setMsg(el, t, ok) { el.style.color = ok ? "#4ade80" : "#fca5a5"; el.textContent = t || ""; }
 
+    // ── Mode toggle ──
+    function showMode(mode) {
+      var reg = mode === "register";
+      regSec.style.display   = reg ? "block" : "none";
+      loginSec.style.display = reg ? "none"  : "block";
+      subEl.textContent = reg
+        ? "Digital Health Platform — request access"
+        : "Digital Health Platform — sign in to continue";
+      setTimeout(function () { (reg ? regName : emailEl).focus(); }, 30);
+    }
+    if (toReg)   toReg.addEventListener("click", function () { showMode("register"); });
+    if (toLogin) toLogin.addEventListener("click", function () { showMode("login"); });
+
+    // ── Login ──
     function doLogin() {
       var email = (emailEl.value || "").trim();
       var pass  = passEl.value || "";
-      if (!email || !pass) { setMsg("Enter your email and password."); return; }
-      loginBtn.disabled = true; loginBtn.textContent = "Signing in…"; setMsg("");
+      if (!email || !pass) { setMsg(msgEl, "Enter your email and password."); return; }
+      loginBtn.disabled = true; loginBtn.textContent = "Signing in…"; setMsg(msgEl, "");
       fetch("/auth/login", {
         method: "POST",
         credentials: "include",
@@ -511,13 +602,49 @@ tr:last-child td{border-bottom:none}
         })
         .catch(function (e) {
           loginBtn.disabled = false; loginBtn.textContent = "Sign in";
-          setMsg(e.message || "Sign-in failed.");
+          setMsg(msgEl, e.message || "Sign-in failed.");
+        });
+    }
+
+    // ── Register (→ pending approval) ──
+    function doRegister() {
+      var name  = (regName.value || "").trim();
+      var email = (regEmail.value || "").trim();
+      var pass  = regPass.value || "";
+      var conf  = regConf.value || "";
+      if (!name || !email || !pass) { setMsg(regMsg, "All fields are required."); return; }
+      if (pass.length < 8) { setMsg(regMsg, "Password must be at least 8 characters."); return; }
+      if (pass !== conf)   { setMsg(regMsg, "Passwords do not match."); return; }
+      regBtn.disabled = true; regBtn.textContent = "Creating…"; setMsg(regMsg, "");
+      fetch("/auth/register", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, email: email, password: pass })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.d && res.d.error) || "Registration failed");
+          showMessageScreen({
+            title: "Account created",
+            body: "Your account for <strong>" + email + "</strong> has been created and is " +
+                  "pending administrator approval. A Super Admin must approve access before you " +
+                  "can sign in. You'll be able to log in once approved."
+          });
+        })
+        .catch(function (e) {
+          regBtn.disabled = false; regBtn.textContent = "Create account";
+          setMsg(regMsg, e.message || "Registration failed.");
         });
     }
 
     loginBtn.addEventListener("click", doLogin);
     passEl.addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
     emailEl.addEventListener("keydown", function (e) { if (e.key === "Enter") passEl.focus(); });
+
+    regBtn.addEventListener("click", doRegister);
+    regConf.addEventListener("keydown", function (e) { if (e.key === "Enter") doRegister(); });
+
     googleBtn.addEventListener("click", function () {
       googleBtn.disabled = true; googleBtn.textContent = "Redirecting…";
       window.location.href = "/auth/google";
@@ -526,18 +653,29 @@ tr:last-child td{border-bottom:none}
   }
 
   // ── Boot: decide gate vs pass-through ─────────────────────────
-  var pending = handleOAuthReturn(function (ok, msg) {
-    // OAuth failed/again: show overlay with message once DOM is ready.
-    if (document.body) showOverlay(msg);
-    else document.addEventListener("DOMContentLoaded", function () { showOverlay(msg); });
-  });
+  function onState(kind, payload) {
+    if (kind === "message") {
+      if (document.body) showMessageScreen(payload);
+      else document.addEventListener("DOMContentLoaded", function () { showMessageScreen(payload); });
+    } else { // "login"
+      if (document.body) showOverlay(payload || "");
+      else document.addEventListener("DOMContentLoaded", function () { showOverlay(payload || ""); });
+    }
+  }
 
-  if (pending === true) {
+  var result = handleOAuthReturn(onState);
+
+  if (result === "pending-network") {
     // OAuth success handling in progress (will reload); block the UI meanwhile.
     document.documentElement.setAttribute("data-cai-authing", "1");
     return;
   }
+  if (result === "handled") {
+    // A message/login screen was requested by handleOAuthReturn.
+    return;
+  }
 
+  // No OAuth return present → gate on token validity.
   if (!tokenValid()) {
     if (document.body) showOverlay("");
     else document.addEventListener("DOMContentLoaded", function () { showOverlay(""); });
@@ -14643,6 +14781,153 @@ function buildGHIMS(c) {
   c.appendChild(body);
 }
 
+</script>
+<script>
+// ============================================================
+// CARDIO AI — USER APPROVALS PANEL (Super Admin / Medical Director)
+// Lists pending accounts and lets an authorised admin approve (assigning
+// a role) or reject. Visible only to users whose JWT role can manage users.
+// ============================================================
+(function () {
+  "use strict";
+  function tok() { try { return localStorage.getItem("cai_token") || ""; } catch (e) { return ""; } }
+  function jwt(t) { try { return JSON.parse(atob(t.split(".")[1])); } catch (e) { return null; } }
+  function api(path, opts) {
+    var t = tok();
+    return fetch(path, Object.assign({
+      credentials: "include",
+      headers: Object.assign({ "Content-Type": "application/json" }, t ? { "Authorization": "Bearer " + t } : {})
+    }, opts || {}));
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  var ADMIN_ROLES  = ["super_admin", "medical_director", "admin"];
+  var ROLE_OPTIONS = ["doctor", "nurse", "lab_tech", "pharmacist", "chps_worker", "medical_director", "admin", "viewer"];
+
+  function init() {
+    var t = tok(); if (!t) return;
+    var p = jwt(t); if (!p || ADMIN_ROLES.indexOf(p.role) === -1) return;
+
+    var btn = document.createElement("button");
+    btn.id = "cai-approvals-btn";
+    btn.title = "Pending user approvals";
+    btn.setAttribute("style",
+      "position:fixed;right:18px;bottom:18px;z-index:9000;background:linear-gradient(135deg,#0d9488,#1565C0);" +
+      "color:#fff;border:none;border-radius:24px;padding:11px 16px;font:600 13px 'DM Sans',system-ui,sans-serif;" +
+      "cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px");
+    btn.innerHTML = '<span style="font-size:15px">&#128100;</span> Approvals ' +
+      '<span id="cai-appr-count" style="display:none;background:#ef4444;border-radius:10px;padding:1px 7px;font-size:11px"></span>';
+    document.body.appendChild(btn);
+    btn.addEventListener("click", openPanel);
+    refreshCount();
+  }
+
+  function refreshCount() {
+    api("/auth/users/pending")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d) return;
+        var c = document.getElementById("cai-appr-count");
+        if (!c) return;
+        if (d.total > 0) { c.style.display = "inline-block"; c.textContent = d.total; }
+        else { c.style.display = "none"; }
+      }).catch(function () {});
+  }
+
+  function openPanel() {
+    var ov = document.createElement("div");
+    ov.id = "cai-appr-overlay";
+    ov.setAttribute("style",
+      "position:fixed;inset:0;z-index:99998;background:rgba(4,10,18,.72);display:flex;align-items:center;" +
+      "justify-content:center;font-family:'DM Sans',system-ui,sans-serif");
+    ov.innerHTML =
+      '<div style="width:560px;max-width:94vw;max-height:82vh;overflow:auto;background:#0d1c2e;border:1px solid #1c3554;border-radius:14px;padding:22px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+          '<div style="font:800 16px Syne,sans-serif;color:#e8f0fb">Pending user approvals</div>' +
+          '<button id="cai-appr-close" style="background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;line-height:1">&times;</button>' +
+        '</div>' +
+        '<div id="cai-appr-list" style="font-size:13px;color:#93a4bd">Loading…</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById("cai-appr-close").addEventListener("click", function () { ov.remove(); });
+    ov.addEventListener("click", function (e) { if (e.target === ov) ov.remove(); });
+    loadList();
+  }
+
+  function loadList() {
+    var box = document.getElementById("cai-appr-list");
+    api("/auth/users/pending")
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) {
+          box.innerHTML = '<div style="color:#fca5a5;padding:12px 0">You do not have permission to manage users.</div>';
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
+      .then(function (d) {
+        if (!d) return;
+        if (!d.users || d.users.length === 0) {
+          box.innerHTML = '<div style="padding:18px 0;color:#64748b">No users awaiting approval.</div>';
+          return;
+        }
+        box.innerHTML = "";
+        d.users.forEach(function (u) { box.appendChild(row(u)); });
+      })
+      .catch(function (e) { box.innerHTML = '<div style="color:#fca5a5">Failed to load: ' + esc(e.message) + '</div>'; });
+  }
+
+  function row(u) {
+    var wrap = document.createElement("div");
+    wrap.setAttribute("style", "border:1px solid #1c3554;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#08131f");
+    var opts = ROLE_OPTIONS.map(function (r) {
+      return '<option value="' + r + '"' + (r === "viewer" ? " selected" : "") + '>' + r + '</option>';
+    }).join("");
+    wrap.innerHTML =
+      '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">' +
+        '<div><div style="color:#e8f0fb;font-weight:700;font-size:13.5px">' + esc(u.name || u.email) + '</div>' +
+          '<div style="color:#64748b;font-size:12px">' + esc(u.email) + ' · ' + esc(u.provider || "local") + '</div></div>' +
+        '<select class="cai-appr-role" style="background:#0d1c2e;color:#e8f0fb;border:1px solid #1c3554;border-radius:7px;padding:6px 8px;font-size:12px">' + opts + '</select>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">' +
+        '<button class="cai-appr-reject" style="background:#3a1620;color:#fca5a5;border:1px solid #7f1d1d;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">Reject</button>' +
+        '<button class="cai-appr-approve" style="background:linear-gradient(135deg,#0d9488,#1565C0);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Approve</button>' +
+      '</div>' +
+      '<div class="cai-appr-msg" style="min-height:14px;font-size:11.5px;color:#fca5a5;margin-top:6px"></div>';
+    var roleSel = wrap.querySelector(".cai-appr-role");
+    var msg = wrap.querySelector(".cai-appr-msg");
+    wrap.querySelector(".cai-appr-approve").addEventListener("click", function () {
+      decide(u.email, "approve", { role: roleSel.value }, wrap, msg);
+    });
+    wrap.querySelector(".cai-appr-reject").addEventListener("click", function () {
+      decide(u.email, "reject", {}, wrap, msg);
+    });
+    return wrap;
+  }
+
+  function decide(email, action, body, wrap, msg) {
+    msg.style.color = "#93a4bd"; msg.textContent = "Working…";
+    api("/auth/users/" + encodeURIComponent(email) + "/" + action, { method: "POST", body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error((res.d && res.d.error) || "Failed");
+        msg.style.color = "#4ade80"; msg.textContent = (action === "approve" ? "Approved" : "Rejected") + " \u2713";
+        wrap.style.transition = "opacity .25s"; wrap.style.opacity = "0.45";
+        setTimeout(function () {
+          wrap.remove(); refreshCount();
+          var box = document.getElementById("cai-appr-list");
+          if (box && !box.querySelector(".cai-appr-role"))
+            box.innerHTML = '<div style="padding:18px 0;color:#64748b">No users awaiting approval.</div>';
+        }, 550);
+      })
+      .catch(function (e) { msg.style.color = "#fca5a5"; msg.textContent = e.message || "Failed"; });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
 </script>
 </body>
 </html>

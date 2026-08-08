@@ -6,7 +6,7 @@ import {
   localLogin, oauthUpsert, refreshToken,
   authenticate, revokeSession, getUserById,
   getAllUsers, updateUserRole,
-  getPendingUsers, setApproval,
+  getPendingUsers, setApproval, registerLocal,
 } from "../auth.js";
 import { authRateLimit } from "../security.js";
 import { requirePermission, PERMISSIONS } from "../rbac.js";
@@ -64,6 +64,18 @@ router.post("/login", authRateLimit, async (req, res) => {
   } catch (e) {
     auditLog("LOGIN_FAIL", null, null, "auth", email, "failed");
     res.status(401).json({ error: e.message || "Invalid email or password" });
+  }
+});
+
+// ── Local registration (self-service → PENDING approval) ──────
+router.post("/register", authRateLimit, async (req, res) => {
+  const { name, email, password } = req.body || {};
+  try {
+    const result = await registerLocal({ name, email, password }, req);
+    res.status(201).json(result);   // { status: "pending", email }
+  } catch (e) {
+    auditLog("REGISTER_FAIL", null, null, "auth", (email || "").toLowerCase(), e.message || "failed");
+    res.status(e.status || 400).json({ error: e.message || "Registration failed" });
   }
 });
 
