@@ -1,0 +1,78 @@
+-- Clinical models for the FHIR R4 / HL7 v2 bridge.
+
+CREATE TABLE "patients" (
+  "id" TEXT NOT NULL,
+  "mrn" TEXT,
+  "ghanaCard" TEXT,
+  "nhis" TEXT,
+  "firstName" TEXT NOT NULL,
+  "lastName" TEXT NOT NULL,
+  "sex" TEXT,
+  "dob" TIMESTAMP(3),
+  "phone" TEXT,
+  "region" TEXT,
+  "district" TEXT,
+  "facilityId" TEXT,
+  "active" BOOLEAN NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "patients_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "patients_mrn_key" ON "patients"("mrn");
+CREATE UNIQUE INDEX "patients_ghanaCard_key" ON "patients"("ghanaCard");
+CREATE INDEX "patients_nhis_idx" ON "patients"("nhis");
+CREATE INDEX "patients_ghanaCard_idx" ON "patients"("ghanaCard");
+CREATE INDEX "patients_lastName_idx" ON "patients"("lastName");
+
+CREATE TABLE "encounters" (
+  "id" TEXT NOT NULL,
+  "patientId" TEXT NOT NULL,
+  "facilityId" TEXT,
+  "class" TEXT NOT NULL DEFAULT 'AMB',
+  "status" TEXT NOT NULL DEFAULT 'in-progress',
+  "reason" TEXT,
+  "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "endedAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "encounters_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "encounters_patientId_idx" ON "encounters"("patientId");
+
+CREATE TABLE "observations" (
+  "id" TEXT NOT NULL,
+  "patientId" TEXT NOT NULL,
+  "encounterId" TEXT,
+  "code" TEXT NOT NULL,
+  "display" TEXT,
+  "value" TEXT,
+  "unit" TEXT,
+  "interpretation" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'final',
+  "effectiveAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "source" TEXT NOT NULL DEFAULT 'manual',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "observations_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "observations_patientId_idx" ON "observations"("patientId");
+CREATE INDEX "observations_code_idx" ON "observations"("code");
+
+CREATE TABLE "conditions" (
+  "id" TEXT NOT NULL,
+  "patientId" TEXT NOT NULL,
+  "encounterId" TEXT,
+  "code" TEXT NOT NULL,
+  "display" TEXT,
+  "clinicalStatus" TEXT NOT NULL DEFAULT 'active',
+  "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "conditions_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "conditions_patientId_idx" ON "conditions"("patientId");
+
+ALTER TABLE "patients" ADD CONSTRAINT "patients_facilityId_fkey" FOREIGN KEY ("facilityId") REFERENCES "facilities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "encounters" ADD CONSTRAINT "encounters_facilityId_fkey" FOREIGN KEY ("facilityId") REFERENCES "facilities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "observations" ADD CONSTRAINT "observations_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "observations" ADD CONSTRAINT "observations_encounterId_fkey" FOREIGN KEY ("encounterId") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "conditions" ADD CONSTRAINT "conditions_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "patients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "conditions" ADD CONSTRAINT "conditions_encounterId_fkey" FOREIGN KEY ("encounterId") REFERENCES "encounters"("id") ON DELETE SET NULL ON UPDATE CASCADE;

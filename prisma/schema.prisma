@@ -23,8 +23,96 @@ model Facility {
   users     User[]
   auditLogs AuditLog[] @relation("FacilityAuditLogs")
   sessions  Session[]  @relation("FacilitySessions")
+  patients  Patient[]  @relation("FacilityPatients")
+  encounters Encounter[] @relation("FacilityEncounters")
 
   @@map("facilities")
+}
+
+// ── Clinical models (FHIR R4 aligned) ─────────────────────────
+model Patient {
+  id          String    @id @default(uuid())
+  mrn         String?   @unique                 // internal medical record number
+  ghanaCard   String?   @unique
+  nhis        String?
+  firstName   String
+  lastName    String
+  sex         String?                           // male | female | other | unknown
+  dob         DateTime?
+  phone       String?
+  region      String?
+  district    String?
+  facilityId  String?
+  facility    Facility? @relation("FacilityPatients", fields: [facilityId], references: [id])
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  encounters   Encounter[]
+  observations Observation[]
+  conditions   Condition[]
+
+  @@index([nhis])
+  @@index([ghanaCard])
+  @@index([lastName])
+  @@map("patients")
+}
+
+model Encounter {
+  id          String    @id @default(uuid())
+  patientId   String
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  facilityId  String?
+  facility    Facility? @relation("FacilityEncounters", fields: [facilityId], references: [id])
+  class       String    @default("AMB")         // AMB (outpatient) | IMP (inpatient) | EMER
+  status      String    @default("in-progress") // planned|in-progress|finished|cancelled
+  reason      String?
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+
+  observations Observation[]
+  conditions   Condition[]
+
+  @@index([patientId])
+  @@map("encounters")
+}
+
+model Observation {
+  id          String    @id @default(uuid())
+  patientId   String
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounterId String?
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
+  code        String                            // LOINC code
+  display     String?
+  value       String?
+  unit        String?
+  interpretation String?                        // N | A | H | L | AA (HL7 abnormal flags)
+  status      String    @default("final")       // registered|preliminary|final|amended
+  effectiveAt DateTime  @default(now())
+  source      String    @default("manual")      // manual | hl7 | device
+  createdAt   DateTime  @default(now())
+
+  @@index([patientId])
+  @@index([code])
+  @@map("observations")
+}
+
+model Condition {
+  id          String    @id @default(uuid())
+  patientId   String
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounterId String?
+  encounter   Encounter? @relation(fields: [encounterId], references: [id])
+  code        String                            // ICD-11 code
+  display     String?
+  clinicalStatus String @default("active")      // active | resolved | inactive
+  recordedAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("conditions")
 }
 
 model User {

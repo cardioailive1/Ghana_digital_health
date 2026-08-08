@@ -15,7 +15,8 @@
     "db:seed": "node server/seed.js",
     "db:studio": "npx prisma studio",
     "db:push": "npx prisma db push",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "hl7": "node server/hl7-service.js"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
@@ -43,7 +44,8 @@
     "react-dom": "^18.3.1",
     "vite": "^5.4.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "hl7v2": "^1.9.0"
   },
   "devDependencies": {
     "prisma": "5.22.0"
