@@ -186,3 +186,16 @@ CREATE TABLE "sync_cursors" (
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "sync_cursors_pkey" PRIMARY KEY ("deviceId")
 );
+
+-- AllergyIntolerance
+CREATE TABLE "allergy_intolerances" (
+  "id" TEXT NOT NULL, "patientId" TEXT NOT NULL,
+  "code" TEXT NOT NULL, "display" TEXT, "category" TEXT,
+  "criticality" TEXT NOT NULL DEFAULT 'low',
+  "clinicalStatus" TEXT NOT NULL DEFAULT 'active',
+  "reaction" TEXT,
+  "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "allergy_intolerances_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "allergy_intolerances_patientId_idx" ON "allergy_intolerances"("patientId");

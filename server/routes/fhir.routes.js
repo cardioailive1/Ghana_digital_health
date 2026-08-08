@@ -12,6 +12,7 @@ import {
   toFhirServiceRequest, toFhirClaim, buildIps,
   toFhirComposition, buildTransactionBundle, toFhirDocumentReference,
   toFhirMedicationRequest, toFhirDiagnosticReport, toFhirImmunization,
+  toFhirAllergyIntolerance,
 } from "../fhir/mappers.js";
 import { isCriticalObservation } from "../fhir/scoring.js";
 import { validateClaim, submitClaimToNhia } from "../fhir/nhia.js";
@@ -370,6 +371,30 @@ router.post("/Claim/:id/\\$submit", async (req, res) => {
   });
   await audit(req, "NHIA_SUBMIT", "Claim", c.id, result.status || "unknown");
   res.json({ claim: toFhirClaim({ ...updated, createdAt: updated.createdAt }), validation, submission: result });
+});
+
+// ── AllergyIntolerance ────────────────────────────────────────
+router.get("/AllergyIntolerance", async (req, res) => {
+  const where = {};
+  if (req.query.patient) where.patientId = String(req.query.patient).split("/").pop();
+  const rows = await prisma.allergyIntolerance.findMany({ where, take: 100, orderBy: { recordedAt: "desc" } });
+  await audit(req, "FHIR_SEARCH", "AllergyIntolerance", null);
+  res.json(bundle(rows.map(toFhirAllergyIntolerance)));
+});
+router.post("/AllergyIntolerance", express.json({ type: ["application/fhir+json", "application/json"] }), async (req, res) => {
+  const b = req.body || {};
+  const patientId = b.patient?.reference?.split("/").pop() || b.patientId;
+  if (!patientId) return res.status(400).json(operationOutcome("required", "patient required"));
+  const coding = b.code?.coding?.[0] || {};
+  const a = await prisma.allergyIntolerance.create({ data: {
+    patientId, code: coding.code || b.code || "", display: coding.display || b.code?.text || b.display || null,
+    category: Array.isArray(b.category) ? b.category[0] : (b.category || null),
+    criticality: b.criticality || "low",
+    clinicalStatus: b.clinicalStatus?.coding?.[0]?.code || "active",
+    reaction: b.reaction?.[0]?.manifestation?.[0]?.text || b.reaction || null,
+  }});
+  await audit(req, "FHIR_CREATE", "AllergyIntolerance", a.id);
+  res.status(201).json(toFhirAllergyIntolerance(a));
 });
 
 export default router;

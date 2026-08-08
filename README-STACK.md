@@ -60,7 +60,7 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 | Referral → `ServiceRequest` + IPS + cross-facility `DocumentReference` | ✅ |
 | IoMT Vitals → `Observation` (LOINC 8867-4/59408-5) + NEWS2 | ✅ |
 
-**FHIR resource coverage:** Patient, Encounter, Observation, Condition, ServiceRequest, Claim, DocumentReference, **MedicationRequest, DiagnosticReport, Immunization** ✅. Remaining: `AllergyIntolerance`; legacy **SOAP/ebXML XDS.b** adapter (FHIR MHD equivalent is done).
+**FHIR resource coverage:** Patient, Encounter, Observation, Condition, ServiceRequest, Claim, DocumentReference, MedicationRequest, DiagnosticReport, Immunization, **AllergyIntolerance** ✅ — resource set complete. Remaining: legacy **SOAP/ebXML XDS.b** adapter only (FHIR MHD equivalent is done).
 
 ---
 
@@ -97,7 +97,7 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 3. ~~**Live NHIA claims submission**~~ — ✅ `submitClaimToNhia` + `Claim/{id}/$submit`. Needs `NHIA_API_URL` + the real NHIA response schema mapping.
 4. ~~**ICD-11 auto-assignment**~~ — ✅ `autocode.js` + `Encounter/{id}/$autocode`. Wire the platform's Claude call into `app.locals.aiComplete` (falls back to STG map).
 5. **Legacy SOAP/ebXML XDS.b adapter** — only needed if a partner exchange can't speak FHIR MHD.
-6. **Additional FHIR resources** — MedicationRequest/DiagnosticReport/Immunization ✅; `AllergyIntolerance` remaining.
+6. ~~**Additional FHIR resources**~~ — ✅ MedicationRequest/DiagnosticReport/Immunization/AllergyIntolerance all done. FHIR resource set complete.
 7. ~~**Real DHIS2 dataElement UIDs + baselines**~~ — ✅ UIDs resolved live from the instance (never hardcoded); EWARN baselines pulled from `/api/analytics`. Client fills `config/idsr-mapping.json` and runs `node server/scripts/dhis2-preflight.mjs` to verify.
 
 ## Deploy order

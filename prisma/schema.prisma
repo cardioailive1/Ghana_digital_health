@@ -222,6 +222,22 @@ model Immunization {
   @@map("immunizations")
 }
 
+model AllergyIntolerance {
+  id            String    @id @default(uuid())
+  patientId     String
+  code          String                            // SNOMED / substance code (or text)
+  display       String?
+  category      String?                           // medication | food | environment | biologic
+  criticality   String    @default("low")         // low | high | unable-to-assess
+  clinicalStatus String   @default("active")       // active | inactive | resolved
+  reaction      String?                           // free-text manifestation
+  recordedAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("allergy_intolerances")
+}
+
 model SyncConflict {
   id            String    @id @default(uuid())
   deviceId      String?

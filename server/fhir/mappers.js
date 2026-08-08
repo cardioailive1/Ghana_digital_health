@@ -318,10 +318,26 @@ function toFhirImmunization(i) {
   });
 }
 
+// ── AllergyIntolerance ────────────────────────────────────────
+function toFhirAllergyIntolerance(a) {
+  return prune({
+    resourceType: "AllergyIntolerance",
+    id: a.id,
+    clinicalStatus: { coding: [{ system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", code: a.clinicalStatus || "active" }] },
+    criticality: a.criticality || undefined,
+    category: a.category ? [a.category] : undefined,
+    code: { coding: a.code ? [{ system: "http://snomed.info/sct", code: a.code, display: a.display || undefined }] : undefined, text: a.display || undefined },
+    patient: { reference: "Patient/" + a.patientId },
+    recordedDate: instant(a.recordedAt),
+    reaction: a.reaction ? [{ manifestation: [{ text: a.reaction }] }] : undefined,
+  });
+}
+
 export {
   SYS, toFhirPatient, fromFhirPatient, toFhirEncounter,
   toFhirObservation, toFhirCondition, bundle, operationOutcome,
   toFhirServiceRequest, toFhirClaim, toFhirComposition, buildIps,
   buildTransactionBundle, IOMT_VITALS_LOINC, toFhirDocumentReference,
   toFhirMedicationRequest, toFhirDiagnosticReport, toFhirImmunization,
+  toFhirAllergyIntolerance,
 };

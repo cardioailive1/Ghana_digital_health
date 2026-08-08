@@ -28,6 +28,7 @@ export function capabilityStatement() {
         rt("MedicationRequest", ["search-type", "create"]),
         rt("DiagnosticReport",  ["search-type", "create"]),
         rt("Immunization",      ["search-type", "create"]),
+        rt("AllergyIntolerance", ["search-type", "create"]),
       ],
       operation: [
         { name: "summary",  definition: "Patient/{id}/$summary (International Patient Summary)" },
