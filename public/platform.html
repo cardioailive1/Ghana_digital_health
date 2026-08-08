@@ -633,12 +633,21 @@ tr:last-child td{border-bottom:none}
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (res) {
           if (!res.ok) throw new Error((res.d && res.d.error) || "Registration failed");
-          showMessageScreen({
-            title: "Account created",
-            body: "Your account for <strong>" + email + "</strong> has been created and is " +
-                  "pending administrator approval. A Super Admin must approve access before you " +
-                  "can sign in. You'll be able to log in once approved."
-          });
+          if (res.d && res.d.superAdmin) {
+            showMessageScreen({
+              title: "Organisation administrator created",
+              body: "You are the first user from your organisation, so <strong>" + email + "</strong> " +
+                    "has been created as the <strong>Super Admin</strong> and approved automatically. " +
+                    "Please sign in to continue — you can then approve everyone else who joins."
+            });
+          } else {
+            showMessageScreen({
+              title: "Account created",
+              body: "Your account for <strong>" + email + "</strong> has been created and is " +
+                    "pending administrator approval. A Super Admin must approve access before you " +
+                    "can sign in. You'll be able to log in once approved."
+            });
+          }
         })
         .catch(function (e) {
           regBtn.disabled = false; regBtn.textContent = "Create account";
