@@ -11,6 +11,7 @@ import logger from "./logger.js";
 import { prisma } from "./db.js";
 import { MLLPServer } from "./hl7/mllp.js";
 import { makeHl7Handler } from "./hl7/handlers.js";
+import { raiseAlert } from "./escalation/sla.js";
 
 const PORT = parseInt(process.env.HL7_MLLP_PORT || "2575", 10);
 
@@ -33,8 +34,8 @@ async function onCritical({ patient, observation }) {
     await prisma.auditLog.create({
       data: { action: "CRITICAL_RESULT", resourceType: "Observation", resourceId: observation.id, outcome: "critical" },
     });
+    await raiseAlert(prisma, { patientId: patient.id, observationId: observation.id, facilityId: patient.facilityId, type: "critical-result", detail: `${observation.code}=${observation.value}` });
   } catch (_) {}
-  // Escalation pipeline hook: notify on-call / IoMT alert centre here.
 }
 
 const handler = makeHl7Handler(prisma, { auditLog, onCritical });

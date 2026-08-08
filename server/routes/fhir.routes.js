@@ -15,21 +15,22 @@ import {
 import { isCriticalObservation } from "../fhir/scoring.js";
 import { validateClaim } from "../fhir/nhia.js";
 import { publishToShr, queryDocuments, retrieveDocument } from "../fhir/integrations.js";
+import { forwardAtna } from "../atna/atna.js";
+import { raiseAlert } from "../escalation/sla.js";
 
 const router = express.Router();
 
 async function audit(req, action, resourceType, resourceId, outcome = "success") {
-  try {
-    await prisma.auditLog.create({
-      data: {
-        action, resourceType, resourceId, outcome,
-        userId: req.user?.sub || null,
-        facilityId: req.user?.facilityId || null,
-        ipAddress: req.ip, userAgent: req.get("user-agent"),
-        requestId: req.requestId || null,
-      },
-    });
-  } catch (_) { /* never block a clinical request on audit failure */ }
+  const entry = {
+    action, resourceType, resourceId, outcome,
+    userId: req.user?.sub || null,
+    facilityId: req.user?.facilityId || null,
+    ipAddress: req.ip, userAgent: req.get("user-agent"),
+    requestId: req.requestId || null, createdAt: new Date(),
+  };
+  try { await prisma.auditLog.create({ data: entry }); }
+  catch (_) { /* never block a clinical request on audit failure */ }
+  forwardAtna(entry).catch(() => {});   // IHE ATNA copy to ARR (no-op if unconfigured)
 }
 
 // CapabilityStatement is public (gateways probe it before connecting).
@@ -99,7 +100,8 @@ router.post("/Observation", express.json({ type: ["application/fhir+json", "appl
   });
   await audit(req, "FHIR_CREATE", "Observation", o.id);
   if (isCriticalObservation(o)) {
-    await audit(req, "CRITICAL_RESULT", "Observation", o.id, "critical");   // escalation pipeline entry
+    await audit(req, "CRITICAL_RESULT", "Observation", o.id, "critical");
+    try { await raiseAlert(prisma, { patientId: o.patientId, observationId: o.id, type: "critical-result", detail: `${o.code}=${o.value}` }); } catch (_) {}
   }
   res.status(201).location(`/fhir/r4/Observation/${o.id}`).json(toFhirObservation(o));
 });

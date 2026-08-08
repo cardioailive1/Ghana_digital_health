@@ -24,6 +24,7 @@ import aiRoutes       from "./routes/ai.routes.js";
 import auditRoute     from "../middleware/auditMiddleware.js";
 import platformRoutes from "./routes/platform.routes.js";
 import fhirRoutes     from "./routes/fhir.routes.js";
+import opsRoutes      from "./routes/ops.routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT   = parseInt(process.env.PORT || "3001");
@@ -77,6 +78,7 @@ app.use("/api",       aiRoutes);
 app.use("/api/audit", auditRoute);
 app.use("/api",       platformRoutes);
 app.use("/fhir/r4",   fhirRoutes);         // FHIR R4 facade (PHI — authenticated)
+app.use("/api",       opsRoutes);          // alerts + ADX/GOFR ops
 
 // ── 6. Root + fallback → serve the Ghana Digital Health Platform ─
 // The platform (public/platform.html) is the primary entry point. It ships

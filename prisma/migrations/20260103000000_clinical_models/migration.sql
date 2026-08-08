@@ -114,3 +114,27 @@ CREATE TABLE "claims" (
 );
 CREATE INDEX "claims_patientId_idx" ON "claims"("patientId");
 CREATE INDEX "claims_status_idx" ON "claims"("status");
+
+-- GOFR facility fields + IoMT alert escalation
+ALTER TABLE "facilities" ADD COLUMN "dhis2OrgUnit" TEXT;
+ALTER TABLE "facilities" ADD COLUMN "latitude" DOUBLE PRECISION;
+ALTER TABLE "facilities" ADD COLUMN "longitude" DOUBLE PRECISION;
+
+CREATE TABLE "alerts" (
+  "id" TEXT NOT NULL,
+  "patientId" TEXT,
+  "observationId" TEXT,
+  "facilityId" TEXT,
+  "type" TEXT NOT NULL,
+  "severity" TEXT NOT NULL DEFAULT 'critical',
+  "detail" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'open',
+  "escalationLevel" INTEGER NOT NULL DEFAULT 0,
+  "acknowledgedById" TEXT,
+  "acknowledgedAt" TIMESTAMP(3),
+  "lastEscalatedAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "alerts_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "alerts_status_idx" ON "alerts"("status");
+CREATE INDEX "alerts_patientId_idx" ON "alerts"("patientId");
