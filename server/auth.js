@@ -14,6 +14,26 @@ import { ROLES } from "./rbac.js";
 const JWT_SECRET  = process.env.JWT_SECRET  || "CHANGE-ME-IN-PRODUCTION-256bit";
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || "8h";
 
+// ── Organisation email restriction (HIPAA access provisioning) ──
+// Only emails on an approved org domain (or an explicit test allowlist) may
+// self-provision via OAuth. Everything else is denied before account creation.
+const ALLOWED_EMAIL_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || "cardioai.gh")
+  .split(",").map(d => d.trim().toLowerCase().replace(/^@/, "")).filter(Boolean);
+const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || "")
+  .split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+
+export function isEmailAllowed(email) {
+  if (!email) return false;
+  const e = email.toLowerCase().trim();
+  const at = e.indexOf("@");
+  // Must be exactly one "@", with a non-empty local part and domain.
+  if (at <= 0 || at !== e.lastIndexOf("@") || at === e.length - 1) return false;
+  if (ALLOWED_EMAILS.includes(e)) return true;               // explicit test allowlist
+  const domain = e.slice(at + 1);
+  // Allow the domain itself and any sub-domain of it (cardioai.gh → kbu.cardioai.gh)
+  return ALLOWED_EMAIL_DOMAINS.some(d => domain === d || domain.endsWith("." + d));
+}
+
 // ── JWT helpers ───────────────────────────────────────────────
 export function signToken(user) {
   const jti = uuidv4(); // unique JWT ID — enables per-session revocation
@@ -70,6 +90,14 @@ export async function authenticate(req, res, next) {
   });
   if (!user || !user.active) {
     return res.status(401).json({ error: "Account inactive" });
+  }
+
+  // Approval gate (HIPAA/SOC 2): no access until a Super Admin approves.
+  if (user.approvalStatus && user.approvalStatus !== "approved") {
+    return res.status(403).json({
+      error: "Account pending administrator approval",
+      code:  "PENDING_APPROVAL",
+    });
   }
 
   req.user = {
@@ -141,6 +169,14 @@ export async function localLogin(email, password, req) {
     data:  { failedLogins: 0, lockedUntil: null, lastLogin: new Date(), loginCount: { increment: 1 } },
   });
 
+  // Approval gate: password may be correct, but access needs admin approval.
+  if (user.approvalStatus && user.approvalStatus !== "approved") {
+    auditLog("LOGIN_BLOCKED_PENDING", user.id, user.facilityId, "auth", "local", "pending");
+    const err = new Error("Account pending administrator approval");
+    err.code = "PENDING_APPROVAL";
+    throw err;
+  }
+
   const token = signToken(user);
   const decoded = verifyToken(token);
   await storeSession(user.id, user.facilityId, decoded.jti, req);
@@ -150,6 +186,10 @@ export async function localLogin(email, password, req) {
 }
 
 // ── OAuth upsert ──────────────────────────────────────────────
+// Returns { status, user, token }.
+//   status "approved" → token issued (caller sets cookie, redirects success)
+//   status "pending"  → account created/awaiting approval (no token)
+//   status "denied"   → off-domain or deactivated/rejected (no token)
 export async function oauthUpsert(profile, provider, req) {
   const email = (
     profile.emails?.[0]?.value ||
@@ -159,38 +199,58 @@ export async function oauthUpsert(profile, provider, req) {
 
   if (!email) throw new Error("No email in OAuth profile");
 
+  // Organisation restriction — reject before creating anything.
+  if (!isEmailAllowed(email)) {
+    auditLog("LOGIN_DENIED_DOMAIN", null, null, "auth", email, provider);
+    logger.warn(`OAuth denied (off-domain): ${email} via ${provider}`);
+    return { status: "denied", reason: "domain", user: null, token: null };
+  }
+
   let user = await prisma.user.findUnique({
     where:   { email },
     include: { facility: true },
   });
 
   if (!user) {
+    // New account → PENDING. A Super Admin / Medical Director must approve.
     user = await prisma.user.create({
       data: {
         email,
         name:     profile.displayName || profile.name?.givenName || email,
-        role:     ROLES.VIEWER,  // admin promotes to correct role
+        role:     ROLES.VIEWER,
         provider,
         oauthId:  profile.id,
         active:   true,
+        approvalStatus: "pending",
       },
       include: { facility: true },
     });
-    logger.info(`New OAuth user: ${email} via ${provider}`);
-  } else {
-    user = await prisma.user.update({
-      where:   { id: user.id },
-      data:    { lastLogin: new Date(), oauthId: profile.id, loginCount: { increment: 1 } },
-      include: { facility: true },
-    });
+    auditLog("USER_PENDING", user.id, null, "auth", email, provider);
+    logger.info(`New OAuth user pending approval: ${email} via ${provider}`);
+    return { status: "pending", user: sanitizeUser(user), token: null };
   }
+
+  // Existing account — enforce state.
+  if (!user.active || user.approvalStatus === "rejected") {
+    auditLog("LOGIN_DENIED_INACTIVE", user.id, user.facilityId, "auth", email, provider);
+    return { status: "denied", reason: "inactive", user: sanitizeUser(user), token: null };
+  }
+  if (user.approvalStatus !== "approved") {
+    return { status: "pending", user: sanitizeUser(user), token: null };
+  }
+
+  user = await prisma.user.update({
+    where:   { id: user.id },
+    data:    { lastLogin: new Date(), oauthId: profile.id, loginCount: { increment: 1 } },
+    include: { facility: true },
+  });
 
   const token   = signToken(user);
   const decoded = verifyToken(token);
   await storeSession(user.id, user.facilityId, decoded.jti, req);
 
   auditLog("LOGIN", user.id, user.facilityId, "auth", provider, "success");
-  return { token, user: sanitizeUser(user) };
+  return { status: "approved", token, user: sanitizeUser(user) };
 }
 
 // ── Logout — revoke session in DB ─────────────────────────────
@@ -251,5 +311,38 @@ export async function updateUserRole(email, role, facilityId, facilityName, admi
     include: { facility: true },
   });
   auditLog("ROLE_CHANGE", adminUser.sub, adminUser.facilityId, "user", email, `role=${role}`);
+  return sanitizeUser(user);
+}
+
+// ── Approval workflow ─────────────────────────────────────────
+export async function getPendingUsers() {
+  const users = await prisma.user.findMany({
+    where:   { approvalStatus: "pending" },
+    include: { facility: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return users.map(sanitizeUser);
+}
+
+export async function setApproval(email, decision, adminUser, role, facilityId) {
+  const data = {
+    approvalStatus: decision,                 // "approved" | "rejected"
+    approvedById:   adminUser?.sub || null,
+    approvedAt:     new Date(),
+  };
+  if (decision === "approved") {
+    data.active = true;
+    if (role) data.role = role;               // assign real role at approval time
+    if (facilityId !== undefined) data.facilityId = facilityId || null;
+  } else {
+    data.active = false;                      // rejected → no access
+  }
+  const user = await prisma.user.update({
+    where:   { email },
+    data,
+    include: { facility: true },
+  });
+  auditLog(decision === "approved" ? "USER_APPROVED" : "USER_REJECTED",
+    adminUser?.sub, adminUser?.facilityId, "user", email, `by=${adminUser?.email || "?"}`);
   return sanitizeUser(user);
 }
