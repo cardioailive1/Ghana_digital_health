@@ -76,10 +76,18 @@ router.get("/google",
   passport.authenticate("google", { scope: ["profile","email"], session: false }));
 
 router.get("/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/?auth=fail" }),
-  (req, res) => {
-    res.cookie("authToken", req.user.token, COOKIE_OPTS);
-    res.redirect("/?auth=success");
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user, info) => {
+      if (err) {
+        console.error("Google OAuth error:", err.message);
+        return res.redirect("/?auth=fail&reason=" + encodeURIComponent(err.message));
+      }
+      if (!user) {
+        return res.redirect("/?auth=fail&reason=no_user");
+      }
+      res.cookie("authToken", user.token, COOKIE_OPTS);
+      res.redirect("/?auth=success");
+    })(req, res, next);
   }
 );
 
@@ -88,10 +96,18 @@ router.get("/microsoft",
   passport.authenticate("microsoft", { session: false }));
 
 router.get("/microsoft/callback",
-  passport.authenticate("microsoft", { session: false, failureRedirect: "/?auth=fail" }),
-  (req, res) => {
-    res.cookie("authToken", req.user.token, COOKIE_OPTS);
-    res.redirect("/?auth=success");
+  (req, res, next) => {
+    passport.authenticate("microsoft", { session: false }, (err, user, info) => {
+      if (err) {
+        console.error("Microsoft OAuth error:", err.message);
+        return res.redirect("/?auth=fail&reason=" + encodeURIComponent(err.message));
+      }
+      if (!user) {
+        return res.redirect("/?auth=fail&reason=no_user");
+      }
+      res.cookie("authToken", user.token, COOKIE_OPTS);
+      res.redirect("/?auth=success");
+    })(req, res, next);
   }
 );
 
