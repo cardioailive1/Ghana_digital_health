@@ -369,6 +369,14 @@ tr:last-child td{border-bottom:none}
     <div class="live-dot"></div>
     <span style="font-size:10px;color:var(--green2);font-family:'DM Mono',monospace">LIVE</span>
     <span id="clock"></span>
+    <div id="cai-userchip" style="display:none;align-items:center;gap:9px;margin-left:14px;padding-left:14px;border-left:1px solid var(--border)">
+      <div style="text-align:right;line-height:1.15">
+        <div id="cai-user-name" style="font-size:12px;font-weight:700;color:#e8f0fb"></div>
+        <div id="cai-user-role" style="font-size:10px;color:#64748b;font-family:'DM Mono',monospace"></div>
+      </div>
+      <button id="cai-logout-btn" title="Sign out"
+        style="background:#152a44;color:#cfe0f5;border:1px solid #24405f;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">Sign out</button>
+    </div>
   </div>
 </nav>
 
@@ -14781,6 +14789,41 @@ function buildGHIMS(c) {
   c.appendChild(body);
 }
 
+</script>
+<script>
+// ============================================================
+// CARDIO AI — SESSION HEADER (signed-in user + Sign out)
+// Populates the nav user chip and wires logout for ALL users.
+// ============================================================
+(function () {
+  "use strict";
+  function tok() { try { return localStorage.getItem("cai_token") || ""; } catch (e) { return ""; } }
+  function jwt(t) { try { return JSON.parse(atob(t.split(".")[1])); } catch (e) { return null; } }
+  function fmtRole(r) {
+    return String(r || "").replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+  function init() {
+    var t = tok(); if (!t) return;
+    var p = jwt(t); if (!p) return;
+    var chip = document.getElementById("cai-userchip");
+    var nameEl = document.getElementById("cai-user-name");
+    var roleEl = document.getElementById("cai-user-role");
+    var btn = document.getElementById("cai-logout-btn");
+    if (nameEl) nameEl.textContent = p.name || p.email || "Signed in";
+    if (roleEl) roleEl.textContent = fmtRole(p.role);
+    if (chip)  chip.style.display = "flex";
+    if (btn) btn.addEventListener("click", function () {
+      btn.disabled = true; btn.textContent = "Signing out…";
+      if (typeof window.caiLogout === "function") { window.caiLogout(); return; }
+      try { localStorage.removeItem("cai_token"); } catch (e) {}
+      fetch("/auth/logout", { method: "POST", credentials: "include" })
+        .catch(function () {})
+        .then(function () { window.location.replace("/"); });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
 </script>
 <script>
 // ============================================================
