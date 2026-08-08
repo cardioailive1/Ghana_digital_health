@@ -67,6 +67,8 @@ async function main() {
         facilityId,
         provider: "local",
         active: true,
+        approvalStatus: "approved",   // seeded staff are trusted / pre-approved
+        approvedAt: new Date(),
       },
     });
     created++;
