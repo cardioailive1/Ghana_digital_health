@@ -46,10 +46,11 @@ services:
       - key: ALLOWED_ORIGINS
         sync: false
       # ── Organisation email restriction (HIPAA access provisioning) ──
-      # Comma-separated org domains allowed to self-provision via OAuth.
+      # Comma-separated org domains allowed to self-provision via OAuth/registration.
       # Sub-domains are matched automatically (cardioai.gh → kbu.cardioai.gh).
+      # cardioailive.com = corporate staff domain; cardioai.gh = platform/facility domain.
       - key: ALLOWED_EMAIL_DOMAINS
-        value: cardioai.gh
+        value: cardioai.gh,cardioailive.com
       # Comma-separated individual emails allowed for testing (e.g. a Google
       # test account on gmail.com). Leave blank in production.
       - key: ALLOWED_EMAILS
