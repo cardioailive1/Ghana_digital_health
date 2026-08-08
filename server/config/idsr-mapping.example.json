@@ -1,0 +1,10 @@
+{
+  "_comment": "Map ICD-11 -> your DHIS2 dataElement. Set 'code' to the stable dataElement CODE (recommended: we resolve the UID from your instance), OR pin 'uid' directly if you know it. Copy to idsr-mapping.json and set IDSR_MAPPING_FILE to its path.",
+  "1F40":   { "code": "IDSR_MALARIA_CONF", "uid": "", "name": "Malaria (confirmed)" },
+  "1F40.1": { "code": "IDSR_MALARIA_SEV",  "uid": "", "name": "Severe malaria" },
+  "1A00":   { "code": "IDSR_CHOLERA",      "uid": "", "name": "Cholera" },
+  "CA22.0": { "code": "IDSR_TB_PULM",      "uid": "", "name": "TB (pulmonary, smear-positive)" },
+  "1C62":   { "code": "IDSR_HIV",          "uid": "", "name": "HIV" },
+  "1B57":   { "code": "IDSR_TYPHOID",      "uid": "", "name": "Typhoid fever" },
+  "JA24":   { "code": "IDSR_MAT_ECLAMPSIA","uid": "", "name": "Eclampsia (maternal)" }
+}

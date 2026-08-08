@@ -49,6 +49,10 @@ services:
         sync: false
       - key: DHIS2_PASS
         sync: false
+      - key: IDSR_MAPPING_FILE
+        sync: false
+      - key: EWARN_BASELINE_PERIOD
+        value: "LAST_52_WEEKS"
       - key: SMS_API_URL
         sync: false
       - key: SMS_API_KEY

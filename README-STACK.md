@@ -44,7 +44,7 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 | SanteMPI v3.3 (Master Patient Index) | 🔌 🏗️ | `matchPatientMpi()` ✅; deploy + set `MPI_BASE_URL` |
 | HAPI FHIR v6.8 (Shared Health Record) | 🔌 🏗️ | push/query/retrieve ✅; deploy + set `SHR_BASE_URL` |
 | GOFR v2.1 (facility registry) | ✅ 🔌 🏗️ | `server/gofr/gofr.js` (resolve/sync/Organization) ✅; deploy + `GOFR_BASE_URL` |
-| ADX 2.0 (FHIR → DHIS2 every 2 min) | ✅ 🔌 | `server/adx/dhis2.js` + worker; needs DHIS2 |
+| ADX 2.0 (FHIR → DHIS2 every 2 min) | ✅ 🔌 | `server/adx/dhis2.js`: real UID resolution (code→UID from instance) + analytics EWARN baselines; needs DHIS2 |
 | ATNA audit (DPA 2012) | ✅ 🔌 | local DB audit ✅ + IHE ATNA (FHIR AuditEvent / TLS syslog) ✅; needs `ATNA_ARR_URL` or `ATNA_SYSLOG_HOST` |
 
 ---
@@ -80,7 +80,8 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 | `SHR_BASE_URL`, `SHR_TOKEN` | web | HAPI FHIR SHR push/query/retrieve |
 | `MPI_BASE_URL`, `MPI_TOKEN` | web | SanteMPI patient matching |
 | `GOFR_BASE_URL`, `GOFR_TOKEN` | web/worker | GOFR facility registry |
-| `DHIS2_BASE_URL`, `DHIS2_USER`/`DHIS2_PASS` or `DHIS2_TOKEN` | worker | ADX dataValueSets push |
+| `DHIS2_BASE_URL`, `DHIS2_USER`/`DHIS2_PASS` or `DHIS2_TOKEN` | worker | ADX dataValueSets push + UID resolution + baselines |
+| `IDSR_MAPPING_FILE`, `EWARN_BASELINE_PERIOD` | worker | IDSR ICD-11→dataElement mapping + baseline window |
 | `ATNA_ARR_URL` and/or `ATNA_SYSLOG_HOST`/`ATNA_SYSLOG_PORT` | web | IHE ATNA audit repository |
 | `SMS_API_URL`, `SMS_API_KEY`, `ESCALATION_CONTACTS` (JSON) | worker | SLA SMS dispatch |
 | `HL7_MLLP_PORT`, `HL7_TLS_KEY`, `HL7_TLS_CERT` | hl7-mllp | MLLP listener + TLS |
@@ -97,7 +98,7 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 4. ~~**ICD-11 auto-assignment**~~ — ✅ `autocode.js` + `Encounter/{id}/$autocode`. Wire the platform's Claude call into `app.locals.aiComplete` (falls back to STG map).
 5. **Legacy SOAP/ebXML XDS.b adapter** — only needed if a partner exchange can't speak FHIR MHD.
 6. **Additional FHIR resources** — MedicationRequest/DiagnosticReport/Immunization ✅; `AllergyIntolerance` remaining.
-7. **Real DHIS2 dataElement UIDs + baselines** — replace placeholder IDs in `IDSR_MAP`; load EWARN baselines.
+7. ~~**Real DHIS2 dataElement UIDs + baselines**~~ — ✅ UIDs resolved live from the instance (never hardcoded); EWARN baselines pulled from `/api/analytics`. Client fills `config/idsr-mapping.json` and runs `node server/scripts/dhis2-preflight.mjs` to verify.
 
 ## Deploy order
 
