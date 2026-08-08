@@ -17,7 +17,7 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || "8h";
 // ── Organisation email restriction (HIPAA access provisioning) ──
 // Only emails on an approved org domain (or an explicit test allowlist) may
 // self-provision via OAuth. Everything else is denied before account creation.
-const ALLOWED_EMAIL_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || "cardioai.gh")
+const ALLOWED_EMAIL_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || "cardioai.gh,cardioailive.com")
   .split(",").map(d => d.trim().toLowerCase().replace(/^@/, "")).filter(Boolean);
 const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || "")
   .split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
