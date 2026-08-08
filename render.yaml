@@ -55,6 +55,12 @@ services:
       # test account on gmail.com). Leave blank in production.
       - key: ALLOWED_EMAILS
         sync: false
+      # Break-glass: set to an email that has already signed in (Google or
+      # registration). On startup that account is elevated to an APPROVED
+      # super_admin so there is always an administrator. Clear once real
+      # admins are approved.
+      - key: BOOTSTRAP_SUPER_ADMIN_EMAIL
+        sync: false
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
     healthCheckPath: /api/health
