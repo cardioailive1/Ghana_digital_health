@@ -111,9 +111,20 @@ router.post("/refresh", authenticate, async (req, res) => {
   try {
     const { token } = await refreshToken(req.user.jti, req);
     res.cookie("authToken", token, COOKIE_OPTS);
-    res.json({ token });
+    const user = await getUserById(req.user.sub);
+    res.json({ token, user });
   } catch (e) {
-    res.status(401).json({ error: e.message });
+    // If jti-based refresh fails (OAuth user), issue new token from user record
+    try {
+      const user = await getUserById(req.user.sub);
+      if (!user) throw new Error("User not found");
+      const { signToken } = await import("../auth.js");
+      const token = signToken(user);
+      res.cookie("authToken", token, COOKIE_OPTS);
+      res.json({ token, user });
+    } catch (e2) {
+      res.status(401).json({ error: e2.message });
+    }
   }
 });
 
