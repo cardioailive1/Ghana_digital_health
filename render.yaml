@@ -45,6 +45,15 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      # ── Organisation email restriction (HIPAA access provisioning) ──
+      # Comma-separated org domains allowed to self-provision via OAuth.
+      # Sub-domains are matched automatically (cardioai.gh → kbu.cardioai.gh).
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: cardioai.gh
+      # Comma-separated individual emails allowed for testing (e.g. a Google
+      # test account on gmail.com). Leave blank in production.
+      - key: ALLOWED_EMAILS
+        sync: false
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
     healthCheckPath: /api/health
