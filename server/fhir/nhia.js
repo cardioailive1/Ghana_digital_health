@@ -60,3 +60,31 @@ export function resolveRCode(code) {
 }
 
 function rcode(code) { const r = resolveRCode(code); return { code, message: r.message, action: r.action, auto: r.auto }; }
+
+// ── Live NHIA submission ──────────────────────────────────────
+// Validates, then POSTs the FHIR Claim to the NHIA API and interprets the
+// response (approved / rejected + R-code). No-op when NHIA_API_URL unset.
+// Config: NHIA_API_URL, NHIA_API_KEY.
+export async function submitClaimToNhia(fhirClaim, { validation, baseUrl = process.env.NHIA_API_URL, key = process.env.NHIA_API_KEY } = {}) {
+  if (validation && !validation.valid) {
+    const rc = validation.errors.find((e) => /^R\d/.test(e.code));
+    return { submitted: false, status: "rejected", rejectionCode: rc?.code || null, reason: "failed local validation", errors: validation.errors };
+  }
+  if (!baseUrl) return { skipped: true, reason: "NHIA_API_URL not configured" };
+  try {
+    const res = await fetch(baseUrl.replace(/\/$/, "") + "/Claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/fhir+json", ...(key ? { Authorization: "Bearer " + key } : {}) },
+      body: JSON.stringify(fhirClaim),
+    });
+    const text = await res.text();
+    let json = null; try { json = text ? JSON.parse(text) : null; } catch { /* */ }
+    // ClaimResponse.outcome: complete|error; disposition carries approve/reject; extension/adjudication may carry R-code.
+    const outcome = json?.outcome;
+    const rejectionCode = json?.error?.[0]?.code?.coding?.[0]?.code || null;
+    const approved = res.ok && (outcome === "complete" || outcome === "queued") && !rejectionCode;
+    return { submitted: true, status: approved ? "submitted" : "rejected", httpStatus: res.status, outcome, rejectionCode, response: json };
+  } catch (e) {
+    return { submitted: false, status: "error", error: e.message };
+  }
+}

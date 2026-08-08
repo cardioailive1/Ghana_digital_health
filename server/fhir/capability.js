@@ -25,11 +25,16 @@ export function capabilityStatement() {
         rt("ServiceRequest", ["search-type", "create"]),
         rt("Claim",          ["search-type", "create"]),
         rt("DocumentReference", ["search-type"]),
+        rt("MedicationRequest", ["search-type", "create"]),
+        rt("DiagnosticReport",  ["search-type", "create"]),
+        rt("Immunization",      ["search-type", "create"]),
       ],
       operation: [
         { name: "summary",  definition: "Patient/{id}/$summary (International Patient Summary)" },
         { name: "finalize", definition: "Encounter/{id}/$finalize (push encounter to SHR + register document)" },
         { name: "xds-summary", definition: "Patient/{id}/$xds-summary (cross-facility document retrieve)" },
+        { name: "autocode", definition: "Encounter/{id}/$autocode (AI ICD-11 assignment)" },
+        { name: "submit",   definition: "Claim/{id}/$submit (validate + NHIA submission)" },
       ],
     }],
   };

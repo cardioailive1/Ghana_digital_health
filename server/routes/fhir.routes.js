@@ -11,9 +11,11 @@ import {
   toFhirObservation, toFhirCondition, bundle, operationOutcome,
   toFhirServiceRequest, toFhirClaim, buildIps,
   toFhirComposition, buildTransactionBundle, toFhirDocumentReference,
+  toFhirMedicationRequest, toFhirDiagnosticReport, toFhirImmunization,
 } from "../fhir/mappers.js";
 import { isCriticalObservation } from "../fhir/scoring.js";
-import { validateClaim } from "../fhir/nhia.js";
+import { validateClaim, submitClaimToNhia } from "../fhir/nhia.js";
+import { autocodeEncounter } from "../fhir/autocode.js";
 import { publishToShr, queryDocuments, retrieveDocument } from "../fhir/integrations.js";
 import { forwardAtna } from "../atna/atna.js";
 import { raiseAlert } from "../escalation/sla.js";
@@ -277,6 +279,97 @@ router.get("/Condition", async (req, res) => {
   const rows = await prisma.condition.findMany({ where, take: 100, orderBy: { recordedAt: "desc" } });
   await audit(req, "FHIR_SEARCH", "Condition", null);
   res.json(bundle(rows.map(toFhirCondition)));
+});
+
+// ── MedicationRequest ─────────────────────────────────────────
+router.get("/MedicationRequest", async (req, res) => {
+  const where = {};
+  if (req.query.patient) where.patientId = String(req.query.patient).split("/").pop();
+  const rows = await prisma.medicationRequest.findMany({ where, take: 100, orderBy: { authoredAt: "desc" } });
+  await audit(req, "FHIR_SEARCH", "MedicationRequest", null);
+  res.json(bundle(rows.map(toFhirMedicationRequest)));
+});
+router.post("/MedicationRequest", express.json({ type: ["application/fhir+json", "application/json"] }), async (req, res) => {
+  const b = req.body || {};
+  const patientId = b.subject?.reference?.split("/").pop() || b.patientId;
+  if (!patientId) return res.status(400).json(operationOutcome("required", "subject required"));
+  const coding = b.medicationCodeableConcept?.coding?.[0] || {};
+  const m = await prisma.medicationRequest.create({ data: {
+    patientId, encounterId: b.encounter?.reference?.split("/").pop() || null,
+    code: coding.code || b.code || "", display: coding.display || null,
+    dosage: b.dosageInstruction?.[0]?.text || b.dosage || null, status: b.status || "active",
+  }});
+  await audit(req, "FHIR_CREATE", "MedicationRequest", m.id);
+  res.status(201).json(toFhirMedicationRequest(m));
+});
+
+// ── DiagnosticReport ──────────────────────────────────────────
+router.get("/DiagnosticReport", async (req, res) => {
+  const where = {};
+  if (req.query.patient) where.patientId = String(req.query.patient).split("/").pop();
+  const rows = await prisma.diagnosticReport.findMany({ where, take: 100, orderBy: { issuedAt: "desc" } });
+  await audit(req, "FHIR_SEARCH", "DiagnosticReport", null);
+  res.json(bundle(rows.map(toFhirDiagnosticReport)));
+});
+router.post("/DiagnosticReport", express.json({ type: ["application/fhir+json", "application/json"] }), async (req, res) => {
+  const b = req.body || {};
+  const patientId = b.subject?.reference?.split("/").pop() || b.patientId;
+  if (!patientId) return res.status(400).json(operationOutcome("required", "subject required"));
+  const coding = b.code?.coding?.[0] || {};
+  const d = await prisma.diagnosticReport.create({ data: {
+    patientId, encounterId: b.encounter?.reference?.split("/").pop() || null,
+    code: coding.code || "", display: coding.display || null, status: b.status || "final",
+    conclusion: b.conclusion || null, observationIds: (b.result || []).map((r) => r.reference?.split("/").pop()).filter(Boolean),
+  }});
+  await audit(req, "FHIR_CREATE", "DiagnosticReport", d.id);
+  res.status(201).json(toFhirDiagnosticReport(d));
+});
+
+// ── Immunization ──────────────────────────────────────────────
+router.get("/Immunization", async (req, res) => {
+  const where = {};
+  if (req.query.patient) where.patientId = String(req.query.patient).split("/").pop();
+  const rows = await prisma.immunization.findMany({ where, take: 100, orderBy: { occurredAt: "desc" } });
+  await audit(req, "FHIR_SEARCH", "Immunization", null);
+  res.json(bundle(rows.map(toFhirImmunization)));
+});
+router.post("/Immunization", express.json({ type: ["application/fhir+json", "application/json"] }), async (req, res) => {
+  const b = req.body || {};
+  const patientId = b.patient?.reference?.split("/").pop() || b.patientId;
+  if (!patientId) return res.status(400).json(operationOutcome("required", "patient required"));
+  const coding = b.vaccineCode?.coding?.[0] || {};
+  const i = await prisma.immunization.create({ data: {
+    patientId, vaccineCode: coding.code || b.vaccineCode || "", display: coding.display || null,
+    status: b.status || "completed", lotNumber: b.lotNumber || null,
+  }});
+  await audit(req, "FHIR_CREATE", "Immunization", i.id);
+  res.status(201).json(toFhirImmunization(i));
+});
+
+// ── Encounter $autocode — AI ICD-11 assignment from assessment text ──
+router.post("/Encounter/:id/\\$autocode", express.json(), async (req, res) => {
+  const enc = await prisma.encounter.findUnique({ where: { id: req.params.id } });
+  if (!enc) return res.status(404).json(operationOutcome("not-found", "Encounter not found"));
+  const assessmentText = req.body?.assessment || req.body?.text || enc.reason || "";
+  // aiComplete can be injected by the platform's Claude call; falls back to STG map.
+  const result = await autocodeEncounter(prisma, { encounterId: enc.id, patientId: enc.patientId, assessmentText, aiComplete: req.app.locals.aiComplete });
+  await audit(req, "FHIR_AUTOCODE", "Encounter", enc.id);
+  res.json({ source: result.source, conditions: result.conditions.map(toFhirCondition) });
+});
+
+// ── Claim $submit — validate + live NHIA submission ───────────
+router.post("/Claim/:id/\\$submit", async (req, res) => {
+  const c = await prisma.claim.findUnique({ where: { id: req.params.id } });
+  if (!c) return res.status(404).json(operationOutcome("not-found", "Claim not found"));
+  const validation = validateClaim({ serviceDate: c.serviceDate, nhisVerified: c.nhisVerified, items: c.items || [] });
+  const fhirClaim = toFhirClaim({ ...c, createdAt: c.createdAt });
+  const result = await submitClaimToNhia(fhirClaim, { validation });
+  const updated = await prisma.claim.update({
+    where: { id: c.id },
+    data: { status: result.status || c.status, rejectionCode: result.rejectionCode || null, submittedAt: result.submitted ? new Date() : null },
+  });
+  await audit(req, "NHIA_SUBMIT", "Claim", c.id, result.status || "unknown");
+  res.json({ claim: toFhirClaim({ ...updated, createdAt: updated.createdAt }), validation, submission: result });
 });
 
 export default router;

@@ -138,3 +138,51 @@ CREATE TABLE "alerts" (
 );
 CREATE INDEX "alerts_status_idx" ON "alerts"("status");
 CREATE INDEX "alerts_patientId_idx" ON "alerts"("patientId");
+
+-- Extra FHIR resources + CHPS offline-sync tracking
+CREATE TABLE "medication_requests" (
+  "id" TEXT NOT NULL, "patientId" TEXT NOT NULL, "encounterId" TEXT,
+  "code" TEXT NOT NULL, "display" TEXT, "dosage" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'active',
+  "authoredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "medication_requests_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "medication_requests_patientId_idx" ON "medication_requests"("patientId");
+
+CREATE TABLE "diagnostic_reports" (
+  "id" TEXT NOT NULL, "patientId" TEXT NOT NULL, "encounterId" TEXT,
+  "code" TEXT NOT NULL, "display" TEXT, "status" TEXT NOT NULL DEFAULT 'final',
+  "conclusion" TEXT, "observationIds" JSONB,
+  "issuedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "diagnostic_reports_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "diagnostic_reports_patientId_idx" ON "diagnostic_reports"("patientId");
+
+CREATE TABLE "immunizations" (
+  "id" TEXT NOT NULL, "patientId" TEXT NOT NULL,
+  "vaccineCode" TEXT NOT NULL, "display" TEXT, "status" TEXT NOT NULL DEFAULT 'completed',
+  "lotNumber" TEXT,
+  "occurredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "immunizations_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "immunizations_patientId_idx" ON "immunizations"("patientId");
+
+CREATE TABLE "sync_conflicts" (
+  "id" TEXT NOT NULL, "deviceId" TEXT, "resourceType" TEXT NOT NULL, "resourceId" TEXT,
+  "clientPayload" JSONB, "serverPayload" JSONB, "resolution" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'open',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "resolvedAt" TIMESTAMP(3),
+  CONSTRAINT "sync_conflicts_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "sync_conflicts_status_idx" ON "sync_conflicts"("status");
+
+CREATE TABLE "sync_cursors" (
+  "deviceId" TEXT NOT NULL, "facilityId" TEXT,
+  "lastSyncAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "sync_cursors_pkey" PRIMARY KEY ("deviceId")
+);

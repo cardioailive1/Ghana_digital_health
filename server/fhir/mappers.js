@@ -275,9 +275,53 @@ function toFhirDocumentReference(d) {
   });
 }
 
+// ── MedicationRequest ─────────────────────────────────────────
+function toFhirMedicationRequest(m) {
+  return prune({
+    resourceType: "MedicationRequest",
+    id: m.id,
+    status: m.status || "active",
+    intent: "order",
+    medicationCodeableConcept: { coding: [{ system: "http://www.nlm.nih.gov/research/umls/rxnorm", code: m.code, display: m.display }] },
+    subject: { reference: "Patient/" + m.patientId },
+    encounter: m.encounterId ? { reference: "Encounter/" + m.encounterId } : undefined,
+    authoredOn: instant(m.authoredAt),
+    dosageInstruction: m.dosage ? [{ text: m.dosage }] : undefined,
+  });
+}
+
+// ── DiagnosticReport ──────────────────────────────────────────
+function toFhirDiagnosticReport(d) {
+  return prune({
+    resourceType: "DiagnosticReport",
+    id: d.id,
+    status: d.status || "final",
+    code: { coding: [{ system: SYS.loinc, code: d.code, display: d.display }] },
+    subject: { reference: "Patient/" + d.patientId },
+    encounter: d.encounterId ? { reference: "Encounter/" + d.encounterId } : undefined,
+    issued: instant(d.issuedAt),
+    result: (d.observationIds || []).map((id) => ({ reference: "Observation/" + id })),
+    conclusion: d.conclusion || undefined,
+  });
+}
+
+// ── Immunization ──────────────────────────────────────────────
+function toFhirImmunization(i) {
+  return prune({
+    resourceType: "Immunization",
+    id: i.id,
+    status: i.status || "completed",
+    vaccineCode: { coding: [{ system: "http://hl7.org/fhir/sid/cvx", code: i.vaccineCode, display: i.display }] },
+    patient: { reference: "Patient/" + i.patientId },
+    occurrenceDateTime: instant(i.occurredAt),
+    lotNumber: i.lotNumber || undefined,
+  });
+}
+
 export {
   SYS, toFhirPatient, fromFhirPatient, toFhirEncounter,
   toFhirObservation, toFhirCondition, bundle, operationOutcome,
   toFhirServiceRequest, toFhirClaim, toFhirComposition, buildIps,
   buildTransactionBundle, IOMT_VITALS_LOINC, toFhirDocumentReference,
+  toFhirMedicationRequest, toFhirDiagnosticReport, toFhirImmunization,
 };

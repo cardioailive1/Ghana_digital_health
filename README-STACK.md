@@ -32,9 +32,9 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 | IoMT monitoring — NEWS2 | ✅ | `server/fhir/scoring.js` (verified) |
 | IoMT — 5-minute SLA escalation | ✅ 🔌 | `server/escalation/sla.js` + worker; SMS gateway needs `SMS_API_URL` |
 | **HL7 FHIR R4 interoperability layer** | ✅ | `server/fhir/*`, `server/hl7/*` — 30/30 + 14/14 tests |
-| NHIS claims automation | ⚠️ | validation/R-codes ✅; ICD-11 auto-coding = AI's job; live submit ❌ |
+| NHIS claims automation | ✅ 🔌 | validation/R-codes ✅; live submit ✅ (needs `NHIA_API_URL`); ICD-11 autocode ✅ |
 | DHIS2 real-time IDSR (ADX) | ✅ 🔌 | `server/adx/dhis2.js` + worker (2-min); needs `DHIS2_BASE_URL` |
-| Offline-first CHPS (2G, 48h buffer) | ❌ | Not built — larger client-side effort |
+| Offline-first CHPS (2G, 48h buffer) | ✅ 🔌 | `server/chps/sync.js` (conflict resolution) + `offline-client.js` reference buffer; device app embeds the client |
 
 ## Layer 3 — OpenHIE (Standards Bridge)
 
@@ -60,7 +60,7 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 | Referral → `ServiceRequest` + IPS + cross-facility `DocumentReference` | ✅ |
 | IoMT Vitals → `Observation` (LOINC 8867-4/59408-5) + NEWS2 | ✅ |
 
-**Not yet built on the FHIR side:** `MedicationRequest`, `DiagnosticReport`, `Immunization`, `AllergyIntolerance` mappers; legacy **SOAP/ebXML XDS.b** adapter (FHIR MHD equivalent is done).
+**FHIR resource coverage:** Patient, Encounter, Observation, Condition, ServiceRequest, Claim, DocumentReference, **MedicationRequest, DiagnosticReport, Immunization** ✅. Remaining: `AllergyIntolerance`; legacy **SOAP/ebXML XDS.b** adapter (FHIR MHD equivalent is done).
 
 ---
 
@@ -92,11 +92,11 @@ Live: https://cardio-ai-ghana.onrender.com · Repo: github.com/cardioailive1/Gha
 ## Next / not done (tracked backlog)
 
 1. **#6 Stand up external services (CRITICAL for client)** — ✅ **deploy artifacts built**: `openhie-stack/` has docker-compose for OpenHIM v8, HAPI FHIR v6.8 (SHR), SanteMPI (CR/MPI), DHIS2, and a GOFR add-on, plus OpenHIM channel registration and a bring-up guide. **Remaining:** run it on a Docker host (VM/k8s), change defaults, add TLS, set the Cardio AI env URLs (§6 of `openhie-stack/README.md`). *Ops — can't be executed from the app repo.*
-2. **Offline-first CHPS sync** — 2G, 48h buffer, conflict resolution. *Not built.*
-3. **Live NHIA claims submission API** — currently validate-only.
-4. **ICD-11 auto-assignment** — AI produces the code; bridge stores it. Wire the AI output into `Condition.code`.
+2. ~~**Offline-first CHPS sync**~~ — ✅ server engine + reference client built (`server/chps/`). Remaining: embed `offline-client.js` in the CHPS device app + a conflict-review UI.
+3. ~~**Live NHIA claims submission**~~ — ✅ `submitClaimToNhia` + `Claim/{id}/$submit`. Needs `NHIA_API_URL` + the real NHIA response schema mapping.
+4. ~~**ICD-11 auto-assignment**~~ — ✅ `autocode.js` + `Encounter/{id}/$autocode`. Wire the platform's Claude call into `app.locals.aiComplete` (falls back to STG map).
 5. **Legacy SOAP/ebXML XDS.b adapter** — only needed if a partner exchange can't speak FHIR MHD.
-6. **Additional FHIR resources** — MedicationRequest, DiagnosticReport, Immunization, AllergyIntolerance.
+6. **Additional FHIR resources** — MedicationRequest/DiagnosticReport/Immunization ✅; `AllergyIntolerance` remaining.
 7. **Real DHIS2 dataElement UIDs + baselines** — replace placeholder IDs in `IDSR_MAP`; load EWARN baselines.
 
 ## Deploy order

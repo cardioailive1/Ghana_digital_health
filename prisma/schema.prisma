@@ -177,6 +177,76 @@ model Alert {
   @@map("alerts")
 }
 
+model MedicationRequest {
+  id          String    @id @default(uuid())
+  patientId   String
+  encounterId String?
+  code        String                            // RxNorm / Ghana EML code
+  display     String?
+  dosage      String?                           // free-text sig (e.g. "AL 4 tabs BD x3d")
+  status      String    @default("active")      // active | completed | stopped
+  authoredAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("medication_requests")
+}
+
+model DiagnosticReport {
+  id          String    @id @default(uuid())
+  patientId   String
+  encounterId String?
+  code        String                            // LOINC panel code
+  display     String?
+  status      String    @default("final")       // registered | partial | final
+  conclusion  String?
+  observationIds Json?                           // ["obs-id", ...]
+  issuedAt    DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("diagnostic_reports")
+}
+
+model Immunization {
+  id          String    @id @default(uuid())
+  patientId   String
+  vaccineCode String                            // CVX code
+  display     String?
+  status      String    @default("completed")   // completed | entered-in-error | not-done
+  lotNumber   String?
+  occurredAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("immunizations")
+}
+
+model SyncConflict {
+  id            String    @id @default(uuid())
+  deviceId      String?
+  resourceType  String
+  resourceId    String?
+  clientPayload Json?
+  serverPayload Json?
+  resolution    String?                          // client-wins | server-wins | merged | manual
+  status        String    @default("open")       // open | resolved
+  createdAt     DateTime  @default(now())
+  resolvedAt    DateTime?
+
+  @@index([status])
+  @@map("sync_conflicts")
+}
+
+model SyncCursor {
+  deviceId    String    @id
+  facilityId  String?
+  lastSyncAt  DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("sync_cursors")
+}
+
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
