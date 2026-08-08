@@ -14792,35 +14792,70 @@ function buildGHIMS(c) {
 </script>
 <script>
 // ============================================================
-// CARDIO AI — SESSION HEADER (signed-in user + Sign out)
-// Populates the nav user chip and wires logout for ALL users.
+// CARDIO AI — SESSION HEADER + LOGOUT  (build: logout-v3)
+// Guarantees a visible Sign out control for ALL authenticated users,
+// independent of the nav layout (which can clip #nav-right on laptops).
 // ============================================================
 (function () {
   "use strict";
+  try { console.log("[CardioAI] session/logout build: logout-v3"); } catch (e) {}
+
   function tok() { try { return localStorage.getItem("cai_token") || ""; } catch (e) { return ""; } }
   function jwt(t) { try { return JSON.parse(atob(t.split(".")[1])); } catch (e) { return null; } }
   function fmtRole(r) {
     return String(r || "").replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
   }
-  function init() {
-    var t = tok(); if (!t) return;
-    var p = jwt(t); if (!p) return;
-    var chip = document.getElementById("cai-userchip");
-    var nameEl = document.getElementById("cai-user-name");
-    var roleEl = document.getElementById("cai-user-role");
-    var btn = document.getElementById("cai-logout-btn");
-    if (nameEl) nameEl.textContent = p.name || p.email || "Signed in";
-    if (roleEl) roleEl.textContent = fmtRole(p.role);
-    if (chip)  chip.style.display = "flex";
-    if (btn) btn.addEventListener("click", function () {
-      btn.disabled = true; btn.textContent = "Signing out…";
-      if (typeof window.caiLogout === "function") { window.caiLogout(); return; }
-      try { localStorage.removeItem("cai_token"); } catch (e) {}
-      fetch("/auth/logout", { method: "POST", credentials: "include" })
-        .catch(function () {})
-        .then(function () { window.location.replace("/"); });
-    });
+
+  function doLogout(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = "Signing out…"; }
+    var done = function () { try { localStorage.removeItem("cai_token"); } catch (e) {} window.location.replace("/"); };
+    if (typeof window.caiLogout === "function") { window.caiLogout(); return; }
+    fetch("/auth/logout", { method: "POST", credentials: "include" }).catch(function () {}).then(done);
   }
+
+  function init() {
+    var t = tok(); if (!t) return;      // only show when signed in
+    var p = jwt(t) || {};
+    var who = p.name || p.email || "Signed in";
+    var role = fmtRole(p.role);
+
+    // (1) Populate the nav chip if the markup is present.
+    var chip = document.getElementById("cai-userchip");
+    if (chip) {
+      var nameEl = document.getElementById("cai-user-name");
+      var roleEl = document.getElementById("cai-user-role");
+      var navBtn = document.getElementById("cai-logout-btn");
+      if (nameEl) nameEl.textContent = who;
+      if (roleEl) roleEl.textContent = role;
+      chip.style.display = "flex";
+      if (navBtn) navBtn.addEventListener("click", function () { doLogout(navBtn); });
+    }
+
+    // (2) GUARANTEED floating Sign out control — always visible, top-right,
+    //     above the nav, regardless of nav flex/overflow behaviour.
+    if (!document.getElementById("cai-logout-fixed")) {
+      var bar = document.createElement("div");
+      bar.id = "cai-logout-fixed";
+      bar.setAttribute("style",
+        "position:fixed;bottom:18px;left:14px;z-index:9500;display:flex;align-items:center;gap:10px;" +
+        "background:rgba(13,28,46,.94);border:1px solid #24405f;border-radius:22px;padding:5px 6px 5px 14px;" +
+        "font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.45);backdrop-filter:blur(4px)");
+      bar.innerHTML =
+        '<div style="text-align:right;line-height:1.1">' +
+          '<div style="font-size:12px;font-weight:700;color:#e8f0fb">' +
+            String(who).replace(/[&<>"]/g, "") + '</div>' +
+          '<div style="font-size:10px;color:#7c8ba3;font-family:\'DM Mono\',monospace">' +
+            String(role).replace(/[&<>"]/g, "") + '</div>' +
+        '</div>' +
+        '<button id="cai-logout-fixed-btn" title="Sign out" ' +
+          'style="background:linear-gradient(135deg,#b91c1c,#7f1d1d);color:#fff;border:none;border-radius:18px;' +
+          'padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer">Sign out</button>';
+      (document.body || document.documentElement).appendChild(bar);
+      document.getElementById("cai-logout-fixed-btn")
+        .addEventListener("click", function () { doLogout(this); });
+    }
+  }
+
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();
