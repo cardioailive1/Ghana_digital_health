@@ -6,6 +6,7 @@ import {
   localLogin, oauthUpsert, refreshToken,
   authenticate, revokeSession, getUserById,
   getAllUsers, updateUserRole,
+  getPendingUsers, setApproval,
 } from "../auth.js";
 import { authRateLimit } from "../security.js";
 import { requirePermission, PERMISSIONS } from "../rbac.js";
@@ -72,15 +73,15 @@ router.get("/google",
 
 router.get("/google/callback",
   (req, res, next) => {
-    passport.authenticate("google", { session: false }, (err, user, info) => {
+    passport.authenticate("google", { session: false }, (err, result, info) => {
       if (err) {
         console.error("Google OAuth error:", err.message);
         return res.redirect("/?auth=fail&reason=" + encodeURIComponent(err.message));
       }
-      if (!user) {
-        return res.redirect("/?auth=fail&reason=no_user");
-      }
-      res.cookie("authToken", user.token, COOKIE_OPTS);
+      if (!result)                    return res.redirect("/?auth=fail&reason=no_user");
+      if (result.status === "denied") return res.redirect("/?auth=denied");
+      if (result.status === "pending")return res.redirect("/?auth=pending");
+      res.cookie("authToken", result.token, COOKIE_OPTS);
       res.redirect("/?auth=success");
     })(req, res, next);
   }
@@ -92,15 +93,15 @@ router.get("/microsoft",
 
 router.get("/microsoft/callback",
   (req, res, next) => {
-    passport.authenticate("microsoft", { session: false }, (err, user, info) => {
+    passport.authenticate("microsoft", { session: false }, (err, result, info) => {
       if (err) {
         console.error("Microsoft OAuth error:", err.message);
         return res.redirect("/?auth=fail&reason=" + encodeURIComponent(err.message));
       }
-      if (!user) {
-        return res.redirect("/?auth=fail&reason=no_user");
-      }
-      res.cookie("authToken", user.token, COOKIE_OPTS);
+      if (!result)                    return res.redirect("/?auth=fail&reason=no_user");
+      if (result.status === "denied") return res.redirect("/?auth=denied");
+      if (result.status === "pending")return res.redirect("/?auth=pending");
+      res.cookie("authToken", result.token, COOKIE_OPTS);
       res.redirect("/?auth=success");
     })(req, res, next);
   }
@@ -163,6 +164,43 @@ router.put("/users/:email/role",
     try {
       const updated = await updateUserRole(req.params.email, role, facilityId, facilityName, req.user);
       res.json({ user: updated });
+    } catch (e) {
+      res.status(404).json({ error: e.message });
+    }
+  }
+);
+
+// ── User approval (Super Admin / Medical Director) ────────────
+router.get("/users/pending",
+  authenticate,
+  requirePermission(PERMISSIONS.USER_MANAGE),
+  async (req, res) => {
+    const users = await getPendingUsers();
+    res.json({ users, total: users.length });
+  }
+);
+
+router.post("/users/:email/approve",
+  authenticate,
+  requirePermission(PERMISSIONS.USER_MANAGE),
+  async (req, res) => {
+    const { role, facilityId } = req.body || {};
+    try {
+      const user = await setApproval(req.params.email, "approved", req.user, role, facilityId);
+      res.json({ user });
+    } catch (e) {
+      res.status(404).json({ error: e.message });
+    }
+  }
+);
+
+router.post("/users/:email/reject",
+  authenticate,
+  requirePermission(PERMISSIONS.USER_MANAGE),
+  async (req, res) => {
+    try {
+      const user = await setApproval(req.params.email, "rejected", req.user);
+      res.json({ user });
     } catch (e) {
       res.status(404).json({ error: e.message });
     }
