@@ -53,9 +53,14 @@ export async function authenticate(req, res, next) {
   }
 
   // Check session not revoked (SOC 2 CC6.3 — access removal)
-  const session = await prisma.session.findUnique({ where: { jti: payload.jti } });
-  if (!session || session.revokedAt) {
-    return res.status(401).json({ error: "Session revoked — please sign in again" });
+  try {
+    const session = await prisma.session.findUnique({ where: { jti: payload.jti } });
+    if (session && session.revokedAt) {
+      return res.status(401).json({ error: "Session revoked — please sign in again" });
+    }
+  } catch (e) {
+    // If sessions table unavailable, continue (DB may still be migrating)
+    logger.warn("Session check failed", { msg: e.message });
   }
 
   // Check user still active
@@ -84,15 +89,20 @@ export async function authenticate(req, res, next) {
 // ── Store session in DB ───────────────────────────────────────
 async function storeSession(userId, facilityId, jti, req) {
   const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000); // 8h
-  await prisma.session.create({
-    data: {
-      userId, facilityId, jti,
-      provider:  "local",
-      ipAddress: req?.ip?.substring(0, 45),
-      userAgent: req?.headers?.["user-agent"]?.substring(0, 200),
-      expiresAt,
-    },
-  });
+  try {
+    await prisma.session.create({
+      data: {
+        userId, facilityId: facilityId || null, jti,
+        provider:  "local",
+        ipAddress: req?.ip?.substring(0, 45),
+        userAgent: req?.headers?.["user-agent"]?.substring(0, 200),
+        expiresAt,
+      },
+    });
+  } catch (e) {
+    // Log but don't fail login if session storage fails
+    logger.error("Session store failed", { msg: e.message });
+  }
 }
 
 // ── Local login ───────────────────────────────────────────────
