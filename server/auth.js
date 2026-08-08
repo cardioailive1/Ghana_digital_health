@@ -34,6 +34,32 @@ export function isEmailAllowed(email) {
   return ALLOWED_EMAIL_DOMAINS.some(d => domain === d || domain.endsWith("." + d));
 }
 
+// Organisation key for an email = the allowed base domain it matches.
+// kbu.cardioai.gh → "cardioai.gh"; tonywell@cardioailive.com → "cardioailive.com".
+// Emails allowed only via the explicit ALLOWED_EMAILS list use their own domain.
+export function orgOf(email) {
+  if (!isEmailAllowed(email)) return null;
+  const domain = email.toLowerCase().trim().split("@")[1] || "";
+  let best = null;
+  for (const d of ALLOWED_EMAIL_DOMAINS) {
+    if (domain === d || domain.endsWith("." + d)) {
+      if (!best || d.length > best.length) best = d;   // most specific match wins
+    }
+  }
+  return best || domain;
+}
+
+// True if the organisation already has an approved super_admin.
+// (The org is derived from each admin's email, so sub-domains group correctly.)
+async function orgHasSuperAdmin(org) {
+  if (!org) return true; // unknown org → don't auto-elect
+  const admins = await prisma.user.findMany({
+    where:  { role: ROLES.SUPER_ADMIN, approvalStatus: "approved" },
+    select: { email: true },
+  });
+  return admins.some(a => orgOf(a.email) === org);
+}
+
 // ── JWT helpers ───────────────────────────────────────────────
 export function signToken(user) {
   const jti = uuidv4(); // unique JWT ID — enables per-session revocation
@@ -209,18 +235,25 @@ export async function registerLocal({ name, email, password }, req) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+
+  // First person from this organisation → auto super_admin + approved.
+  const org = orgOf(email);
+  const firstAdmin = !(await orgHasSuperAdmin(org));
+
   const user = await prisma.user.create({
     data: {
       email, name, passwordHash,
-      role: ROLES.VIEWER,
+      role: firstAdmin ? ROLES.SUPER_ADMIN : ROLES.VIEWER,
       provider: "local",
       active: true,
-      approvalStatus: "pending",   // must be approved by a Super Admin
+      approvalStatus: firstAdmin ? "approved" : "pending",
+      approvedAt:     firstAdmin ? new Date() : null,
     },
   });
-  auditLog("USER_REGISTERED", user.id, null, "auth", email, "pending");
-  logger.info(`New local registration pending approval: ${email}`);
-  return { status: "pending", email };
+  auditLog(firstAdmin ? "USER_REGISTERED_SUPERADMIN" : "USER_REGISTERED",
+    user.id, null, "auth", email, firstAdmin ? `org_first_admin:${org}` : "pending");
+  logger.info(`New local registration: ${email} → ${firstAdmin ? "ORG SUPER ADMIN (approved)" : "pending approval"}`);
+  return { status: firstAdmin ? "approved" : "pending", email, superAdmin: firstAdmin };
 }
 
 // ── OAuth upsert ──────────────────────────────────────────────
@@ -250,19 +283,33 @@ export async function oauthUpsert(profile, provider, req) {
   });
 
   if (!user) {
-    // New account → PENDING. A Super Admin / Medical Director must approve.
+    // First person from this organisation → auto super_admin + approved.
+    const org = orgOf(email);
+    const firstAdmin = !(await orgHasSuperAdmin(org));
+
     user = await prisma.user.create({
       data: {
         email,
         name:     profile.displayName || profile.name?.givenName || email,
-        role:     ROLES.VIEWER,
+        role:     firstAdmin ? ROLES.SUPER_ADMIN : ROLES.VIEWER,
         provider,
         oauthId:  profile.id,
         active:   true,
-        approvalStatus: "pending",
+        approvalStatus: firstAdmin ? "approved" : "pending",
+        approvedAt:     firstAdmin ? new Date() : null,
       },
       include: { facility: true },
     });
+
+    if (firstAdmin) {
+      const token   = signToken(user);
+      const decoded = verifyToken(token);
+      await storeSession(user.id, user.facilityId, decoded.jti, req);
+      auditLog("LOGIN", user.id, user.facilityId, "auth", provider, `org_first_admin:${org}`);
+      logger.info(`New OAuth user is ORG SUPER ADMIN (approved): ${email} via ${provider}`);
+      return { status: "approved", token, user: sanitizeUser(user) };
+    }
+
     auditLog("USER_PENDING", user.id, null, "auth", email, provider);
     logger.info(`New OAuth user pending approval: ${email} via ${provider}`);
     return { status: "pending", user: sanitizeUser(user), token: null };
