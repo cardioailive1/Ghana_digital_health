@@ -66,8 +66,10 @@ export function AuthProvider({ children }) {
 
   // ── Login ─────────────────────────────────────────────────
   const login = useCallback((userData, tok) => {
-    localStorage.setItem("cai_token", tok);
-    setToken(tok);
+    if (tok) {
+      localStorage.setItem("cai_token", tok);
+      setToken(tok);
+    }
     setUser(userData);
   }, []);
 
