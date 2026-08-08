@@ -123,6 +123,28 @@ server.listen(PORT, "0.0.0.0", async () => {
     const userCount = await prisma.user.count();
     logger.info(`PostgreSQL connected — ${userCount} users in database`);
     if (userCount === 0) logger.warn("No users found — run: node server/seed.js");
+
+    // ── Bootstrap super admin (idempotent, HIPAA break-glass) ──
+    // Set BOOTSTRAP_SUPER_ADMIN_EMAIL to an email that already exists (e.g. a
+    // Google/registered account). On startup it is elevated to an APPROVED
+    // super_admin so there is always a way in. Safe to leave set; safe to remove.
+    const bootEmail = (process.env.BOOTSTRAP_SUPER_ADMIN_EMAIL || "").toLowerCase().trim();
+    if (bootEmail) {
+      try {
+        const existing = await prisma.user.findUnique({ where: { email: bootEmail } });
+        if (existing) {
+          await prisma.user.update({
+            where: { email: bootEmail },
+            data:  { role: "super_admin", approvalStatus: "approved", active: true, approvedAt: new Date() },
+          });
+          logger.info(`Bootstrap: ${bootEmail} ensured as APPROVED super_admin`);
+        } else {
+          logger.warn(`Bootstrap: ${bootEmail} not found yet — sign in once (Google or register), then redeploy/restart to elevate.`);
+        }
+      } catch (e) {
+        logger.error("Bootstrap super admin failed", { msg: e.message });
+      }
+    }
   } catch (e) {
     logger.error("PostgreSQL connection failed", { msg: e.message });
     logger.error("Set DATABASE_URL and run: npx prisma migrate deploy");
