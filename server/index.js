@@ -34,11 +34,13 @@ const app = express();
 // ── Trust proxy (Render load balancer) ───────────────────────
 app.set("trust proxy", 1);
 
-// ── 1. Static files FIRST — before any middleware ────────────
-// This ensures /assets/, /platform.html, favicon never hit CORS
-app.use(express.static(PUBLIC));
+// ── 1. Static assets FIRST — but DO NOT auto-serve any index.html ─
+// index:false is critical: without it, express.static(DIST) answers "/"
+// with dist/index.html (the old React app) before our platform route runs.
+// Named files (/platform.html, /assets/*, logos) are still served normally.
+app.use(express.static(PUBLIC, { index: false }));
 if (isProd) {
-  app.use(express.static(DIST));
+  app.use(express.static(DIST, { index: false }));
 }
 
 // ── 2. Security middleware (only for API/auth routes) ─────────
@@ -74,15 +76,21 @@ app.use("/api/audit", auditRoute);
 app.use("/api",       platformRoutes);
 
 // ── 6. Root + fallback → serve the Ghana Digital Health Platform ─
-// The platform (public/platform.html) is the primary entry point.
-// It ships its own login gate and calls the /api/* + /auth/* routes.
-// Static assets (/assets, /platform.html, logos) are already served
-// above by express.static(PUBLIC)/(DIST), so they resolve first.
+// The platform (public/platform.html) is the primary entry point. It ships
+// its own login gate and calls the /api/* + /auth/* routes.
 const PLATFORM_HTML = path.join(PUBLIC, "platform.html");
 
-app.get("/", (req, res) => {
-  res.sendFile(PLATFORM_HTML);
-});
+function sendPlatform(req, res) {
+  res.sendFile(PLATFORM_HTML, (err) => {
+    if (err) {
+      logger.error("Failed to serve platform.html", { msg: err.message, path: PLATFORM_HTML });
+      res.status(500).type("text/plain")
+        .send("platform.html not found at " + PLATFORM_HTML + " — ensure public/platform.html is deployed.");
+    }
+  });
+}
+
+app.get("/", sendPlatform);
 
 // Legacy React app (login/clinical-assistant SPA) still reachable at /app
 if (isProd) {
@@ -92,9 +100,7 @@ if (isProd) {
 }
 
 // Any other non-API/non-auth GET → the platform (client handles the rest)
-app.get("*", (req, res) => {
-  res.sendFile(PLATFORM_HTML);
-});
+app.get("*", sendPlatform);
 
 // ── 7. Global error handler ───────────────────────────────────
 app.use((err, req, res, next) => {
