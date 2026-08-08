@@ -1426,14 +1426,15 @@ function buildAlertsCard() {
   return c;
 }
 
-var ALERTS = [
-  {t:'crit', title:'Suspected cholera cluster - Upper West Region (3 cases, Lawra)', meta:'4 min ago'},
-  {t:'warn', title:'Malaria spike above 2-sigma baseline - Northern Region, Tamale', meta:'18 min ago'},
-  {t:'info', title:'TB notification surge - Greater Accra (12 new cases this week)', meta:'2 hr ago'}
-];
+var ALERTS = [];
 
 function renderAlerts(container, data) {
   clr(container);
+  if(!data || !data.length){
+    container.appendChild(el('div', {style:{color:'var(--muted)',fontSize:'12px',padding:'1.25rem 0',textAlign:'center'}},
+      'No active surveillance alerts.'));
+    return;
+  }
   var cols = {crit:'#f87171', warn:'#fcd34d', info:'#7dd3fc'};
   data.slice(0,5).forEach(function(a) {
     var row = el('div', {cls:'alrt '+(a.t||'info')});
@@ -1448,13 +1449,13 @@ function renderAlerts(container, data) {
 
 function initOverviewCharts() {
   var co = document.getElementById('ov-opd-chart');
-  if (co) new Chart(co.getContext('2d'), {type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'OPD',data:[7820,8105,7960,8460,8240,6820,7140],borderColor:'#2dd4bf',backgroundColor:'rgba(45,212,191,.08)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#2dd4bf'},{label:'NHIS Claims',data:[980,1040,1010,1160,1090,870,920],borderColor:'#fbbf24',backgroundColor:'rgba(251,191,36,.06)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#fbbf24'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:10,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
+  if (co) new Chart(co.getContext('2d'), {type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'OPD',data:[0,0,0,0,0,0,0],borderColor:'#2dd4bf',backgroundColor:'rgba(45,212,191,.08)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#2dd4bf'},{label:'NHIS Claims',data:[0,0,0,0,0,0,0],borderColor:'#fbbf24',backgroundColor:'rgba(251,191,36,.06)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#fbbf24'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:10,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
   var cd = document.getElementById('ov-dis-chart');
-  if (cd) new Chart(cd.getContext('2d'), {type:'doughnut',data:{labels:['Malaria','Respiratory','Hypertension','Diarrhoea','Other'],datasets:[{data:[31,18,22,12,17],backgroundColor:['#fb923c','#60a5fa','#f87171','#4ade80','#a78bfa'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}}}});
+  if (cd) new Chart(cd.getContext('2d'), {type:'doughnut',data:{labels:['Malaria','Respiratory','Hypertension','Diarrhoea','Other'],datasets:[{data:[0,0,0,0,0],backgroundColor:['#fb923c','#60a5fa','#f87171','#4ade80','#a78bfa'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}}}});
   var cn = document.getElementById('ov-nhis-chart');
-  if (cn) new Chart(cn.getContext('2d'), {type:'bar',data:{labels:['Submitted','Approved','Pending','Rejected','Fraud'],datasets:[{data:[1204,1098,82,18,3],backgroundColor:['#2dd4bf','#4ade80','#fbbf24','#f87171','#f97316'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
+  if (cn) new Chart(cn.getContext('2d'), {type:'bar',data:{labels:['Submitted','Approved','Pending','Rejected','Fraud'],datasets:[{data:[0,0,0,0,0],backgroundColor:['#2dd4bf','#4ade80','#fbbf24','#f87171','#f97316'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
   var ca = document.getElementById('ov-ai-chart');
-  if (ca) new Chart(ca.getContext('2d'), {type:'bar',data:{labels:['Diagnose','Predict','Scan','Insights','Voice'],datasets:[{data:[342,218,176,89,134],backgroundColor:['#2dd4bf','#60a5fa','#a78bfa','#fb923c','#fbbf24'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}}}}});
+  if (ca) new Chart(ca.getContext('2d'), {type:'bar',data:{labels:['Diagnose','Predict','Scan','Insights','Voice'],datasets:[{data:[0,0,0,0,0],backgroundColor:['#2dd4bf','#60a5fa','#a78bfa','#fb923c','#fbbf24'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}}}}});
 }
 
 // ============================================================
@@ -1712,7 +1713,7 @@ function buildRA(container) {
   container.appendChild(row(2, left, right));
   setTimeout(function(){
     var c = document.getElementById('ra-trend-chart');
-    if(c) new Chart(c.getContext('2d'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[{label:'Risk %',data:[22,18,25,31,28,22,35,42,38,30,27,24],borderColor:'#2dd4bf',backgroundColor:'rgba(45,212,191,.08)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#2dd4bf'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10},callback:function(v){return v+'%'}},min:0,max:60}}}});
+    if(c) new Chart(c.getContext('2d'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[{label:'Risk %',data:[0,0,0,0,0,0,0,0,0,0,0,0],borderColor:'#2dd4bf',backgroundColor:'rgba(45,212,191,.08)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#2dd4bf'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10},callback:function(v){return v+'%'}},min:0,max:60}}}});
   },100);
 }
 
@@ -2155,11 +2156,11 @@ function buildInsights() {
   hdr.appendChild(el('div',{cls:'psub'},'Real-time population surveillance - Outbreak detection - Health equity analytics - 16 Ghana regions'));
   pane.appendChild(hdr);
   var kpis=el('div',{cls:'g5',style:{marginBottom:'1.25rem'}});
-  kpis.appendChild(kpiCard('jade','Facilities Reporting','1,487','Last sync: <1 min','','nt'));
-  kpis.appendChild(kpiCard('red','Active Alerts','3','1 critical','','dn'));
-  kpis.appendChild(kpiCard('gold','OPD Visits 24h','8,241','16 regions','+ 4.2% vs yesterday','up'));
-  kpis.appendChild(kpiCard('sky','Data Sync Rate','98.4%','All 16 regions','','nt'));
-  kpis.appendChild(kpiCard('amber','Malaria Cases 24h','1,241','Northern surge','','dn'));
+  kpis.appendChild(kpiCard('jade','Facilities Reporting','0','Last sync: <1 min','','nt'));
+  kpis.appendChild(kpiCard('red','Active Alerts','0','None active','','dn'));
+  kpis.appendChild(kpiCard('gold','OPD Visits 24h','0','16 regions','+ 4.2% vs yesterday','up'));
+  kpis.appendChild(kpiCard('sky','Data Sync Rate','0%','All 16 regions','','nt'));
+  kpis.appendChild(kpiCard('amber','Malaria Cases 24h','0','—','','dn'));
   pane.appendChild(kpis);
   var left=el('div',{style:{display:'flex',flexDirection:'column',gap:'1rem'}});
   var right=el('div',{style:{display:'flex',flexDirection:'column',gap:'1rem'}});
@@ -2219,9 +2220,9 @@ function renderRegions(disease) {
 
 function initInsightsCharts() {
   var tc2=document.getElementById('ins-trend-chart');
-  if(tc2) new Chart(tc2.getContext('2d'),{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Malaria',data:[1240,1185,1320,1480,1390,1120,980],borderColor:'#fb923c',tension:.4,fill:false,pointRadius:2},{label:'Respiratory',data:[680,720,695,810,775,640,590],borderColor:'#60a5fa',tension:.4,fill:false,pointRadius:2},{label:'Diarrhoea',data:[320,290,380,410,365,280,240],borderColor:'#4ade80',tension:.4,fill:false,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
+  if(tc2) new Chart(tc2.getContext('2d'),{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Malaria',data:[0,0,0,0,0,0,0],borderColor:'#fb923c',tension:.4,fill:false,pointRadius:2},{label:'Respiratory',data:[0,0,0,0,0,0,0],borderColor:'#60a5fa',tension:.4,fill:false,pointRadius:2},{label:'Diarrhoea',data:[0,0,0,0,0,0,0],borderColor:'#4ade80',tension:.4,fill:false,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
   var fc2=document.getElementById('ins-forecast-chart');
-  if(fc2) new Chart(fc2.getContext('2d'),{type:'bar',data:{labels:['Beds','Blood','IV Fluids','RDTs','Antibiotics','O2'],datasets:[{label:'Current %',data:[78,62,85,54,71,66],backgroundColor:'rgba(45,212,191,.5)'},{label:'Forecast demand',data:[88,74,91,82,79,85],backgroundColor:'rgba(249,115,22,.4)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:8,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10},callback:function(v){return v+'%'}},min:0,max:100}}}});
+  if(fc2) new Chart(fc2.getContext('2d'),{type:'bar',data:{labels:['Beds','Blood','IV Fluids','RDTs','Antibiotics','O2'],datasets:[{label:'Current %',data:[0,0,0,0,0,0],backgroundColor:'rgba(45,212,191,.5)'},{label:'Forecast demand',data:[0,0,0,0,0,0],backgroundColor:'rgba(249,115,22,.4)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:8,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10},callback:function(v){return v+'%'}},min:0,max:100}}}});
 }
 
 // ============================================================
@@ -2483,354 +2484,7 @@ function genEdu() {
 // ============================================================
 
 // -- Rich patient dataset ---------------------------------------------
-var EHR_PTS = [
-  {
-    id:'PT-00441', name:'Akosua Mensah', age:34, sex:'F', dob:'12 Mar 1991',
-    region:'Greater Accra', district:'Accra Metro', facility:'Ridge Regional Hospital',
-    nhis:'GH-NHIS-2291874', ghanaCard:'GHA-190234-7', phone:'+233 24 456 7890',
-    blood:'O+', weight:'68kg', height:'164cm', bmi:'25.3',
-    status:'Active', stcls:'bg',
-    allergies:['Penicillin - rash','Sulfonamides - unknown reaction'],
-    conditions:['Recurrent malaria','Mild iron-deficiency anaemia'],
-    vitals:{temp:'38.9',bp:'118/76',hr:'102',rr:'20',spo2:'97',weight:'68',gcs:'15'},
-    lastVisit:'Today 09:24', lastClinician:'Dr. E. Asante', lastFacility:'Ridge Regional Hospital',
-    dx:'Uncomplicated P.falciparum Malaria',
-    encounters:[
-      {date:'Today 09:24',type:'OPD',facility:'Ridge Regional',clinician:'Dr. E. Asante',icd:'1F40',dx:'Uncomplicated P.falciparum Malaria',rx:'Artemether-Lumefantrine 4 tabs BD x3d',nhis:'CLM-24-08412',status:'NHIS submitted'},
-      {date:'14 Jan 2026',type:'OPD',facility:'Ridge Regional',clinician:'Dr. E. Asante',icd:'--',dx:'Routine check-up - all normal',rx:'Ferrous sulphate 200mg BD',nhis:'CLM-26-01892',status:'NHIS approved'},
-      {date:'02 Sep 2025',type:'OPD',facility:'Korle Bu OPD',clinician:'Dr. A. Mensah',icd:'1F40',dx:'Malaria - uncomplicated P.falciparum',rx:'AL treatment - completed',nhis:'CLM-25-08204',status:'NHIS approved'},
-      {date:'18 Mar 2025',type:'Lab',facility:'Ridge Regional',clinician:'Lab Dept',icd:'--',dx:'FBC: Hb 10.8 - mild anaemia. MCV normal.',rx:'Dietary advice + iron supplementation',nhis:'CLM-25-03112',status:'NHIS approved'}
-    ],
-    labs:[
-      {date:'Today',test:'Malaria RDT',result:'POSITIVE - P.falciparum',flag:'H',ref:'Negative'},
-      {date:'Today',test:'Hb g/dL',result:'11.2',flag:'L',ref:'12.0-16.0'},
-      {date:'Today',test:'WBC x10/L',result:'11.8',flag:'H',ref:'4.0-11.0'},
-      {date:'Today',test:'Platelets x10/L',result:'142',flag:'L',ref:'150-400'},
-      {date:'Today',test:'CRP mg/L',result:'48',flag:'H',ref:'<10'},
-      {date:'14 Jan 2026',test:'Hb g/dL',result:'12.1',flag:'N',ref:'12.0-16.0'},
-      {date:'02 Sep 2025',test:'Blood film',result:'P.falciparum +++ parasitaemia',flag:'H',ref:'Negative'}
-    ],
-    medications:[
-      {drug:'Artemether-Lumefantrine 20/120mg',dose:'4 tabs BD',dur:'3 days',start:'Today',status:'Active',prescriber:'Dr. E. Asante'},
-      {drug:'Ferrous sulphate 200mg',dose:'1 tab BD',dur:'3 months',start:'14 Jan 2026',status:'Active',prescriber:'Dr. E. Asante'},
-      {drug:'Paracetamol 500mg',dose:'2 tabs TID PRN',dur:'As needed',start:'Today',status:'PRN',prescriber:'Dr. E. Asante'}
-    ],
-    immunisations:[
-      {vaccine:'Tetanus toxoid',date:'2022',site:'Ridge Regional',lot:'TT-2204'},
-      {vaccine:'Yellow fever',date:'2019',site:'GCVD',lot:'YF-1904'},
-      {vaccine:'COVID-19 (AstraZeneca)',date:'2021',site:'NACOC',lot:'AZ-2107'}
-    ],
-    referrals:[],
-    demographics:{
-      ethnicity:'Akan (Asante)', language:'Twi (Asante)', religion:'Christian - Pentecostal / Charismatic',
-      education:'Senior High School (SHS)', occupation:'Trader / Market vendor',
-      employer:'Self-employed - Kaneshie Market', income:'400 - 800 GHC/month',
-      nokName:'Kweku Mensah', nokRel:'Spouse', nokPhone:'+233 24 789 0012',
-      marital:'Married', nationality:'Ghanaian', restype:'Urban',
-      address:'House 14, Kaneshie First Close, Accra Metro',
-      gps:'GA-142-8834', chps:'Kaneshie CHPS Zone 3', literacy:'Moderate',
-      smokingStatus:'Never smoked', alcoholUse:'None', malariaPrevention:'Sleeps under ITN'
-    },
-    familyHistory:[
-      {relation:'Father', condition:'Type 2 Diabetes', ageAtDiagnosis:'52', deceased:false, notes:'On metformin, poorly controlled'},
-      {relation:'Mother', condition:'Hypertension', ageAtDiagnosis:'48', deceased:false, notes:'On amlodipine'},
-      {relation:'Paternal Uncle', condition:'Sickle cell disease (SS)', ageAtDiagnosis:'childhood', deceased:true, notes:'Died age 34 - complications'},
-      {relation:'Maternal Grandmother', condition:'Stroke', ageAtDiagnosis:'70', deceased:true, notes:'Fatal cerebrovascular event'}
-    ],
-    medicalHistory:[
-      {year:'2021-present', condition:'Recurrent P.falciparum malaria', treatment:'Multiple AL courses', status:'Recurrent', notes:'3 episodes in past 24 months - possible partial immunity loss'},
-      {year:'2020-present', condition:'Iron-deficiency anaemia', treatment:'Ferrous sulphate intermittent', status:'Chronic - partially treated', notes:'Hb ranges 10.8-12.1 - dietary iron intake poor'},
-      {year:'2019', condition:'Urinary tract infection', treatment:'Nitrofurantoin 7-day course', status:'Resolved', notes:'Urine culture: E.coli sensitive to nitrofurantoin'},
-      {year:'2017', condition:'Mild pre-eclampsia (1st pregnancy)', treatment:'Labetalol + MgSO4 prophylaxis', status:'Resolved', notes:'Delivered at 37 weeks - baby healthy'}
-    ],
-    imagingStudies:[
-      {date:'29 Oct 2024', modality:'Abdominal USS', indication:'Splenomegaly evaluation', findings:'Mild splenomegaly 13.5cm - consistent with recurrent malaria. No focal lesions. Normal liver, kidneys, bladder.', radiologist:'Dr. A. Ankrah - Ridge Radiology', status:'Final report'},
-      {date:'Mar 2022', modality:'Obstetric USS', indication:'Antenatal care', findings:'Single viable fetus 32 weeks. Normal liquor. Cephalic presentation. Placenta posterior grade 2.', radiologist:'Midwife USS service', status:'Archived'}
-    ],
-    surgicalHistory:[
-      {date:'2017', procedure:'Emergency Caesarean Section (LSCS)', indication:'Mild pre-eclampsia + failed induction', surgeon:'Dr. B. Ofori - Korle Bu', anaesthesia:'Spinal', outcome:'Uncomplicated. Healthy neonate 3.1kg.', complications:'None', hospital:'Korle Bu Teaching Hospital'}
-    ],
-    soap:{s:'34F presenting with 3-day history of fever with rigors, bilateral frontal headache, and nausea. Positive home RDT for P.falciparum. No vomiting. Not pregnant. No regular medications. No known drug allergies except penicillin (rash).',o:'Temp 38.9 C, BP 118/76, HR 102 bpm, RR 20, SpO2 97%, Weight 68kg, GCS 15/15. Mild splenomegaly 2cm BCM. No jaundice. No meningism. RDT Pf: POSITIVE. Hb 11.2, WBC 11.8, PLT 142, CRP 48.',a:'Uncomplicated Plasmodium falciparum Malaria (ICD-11: 1F40). Mild anaemia - likely chronic iron deficiency exacerbated by malaria. Haemodynamically stable.',p:'1. AL 4 tabs BD x3 days with food. 2. Paracetamol 1g TID PRN fever. 3. Ferrous sulphate 200mg BD continue. 4. Oral hydration. 5. Safety-net: return if fever persists >48h, vomiting, confusion. 6. Follow-up in 7 days for parasitaemia clearance and Hb recheck.'}
-  },
-  {
-    id:'PT-00382', name:'Kofi Agyemang', age:58, sex:'M', dob:'07 Nov 1966',
-    region:'Ashanti', district:'Kumasi Metro', facility:'Komfo Anokye Teaching Hospital',
-    nhis:'GH-NHIS-1184562', ghanaCard:'GHA-204811-3', phone:'+233 24 781 2340',
-    blood:'A+', weight:'84kg', height:'172cm', bmi:'28.4',
-    status:'Chronic', stcls:'by',
-    allergies:['No known drug allergies'],
-    conditions:['Hypertension (Grade 2)','Type 2 Diabetes Mellitus (HbA1c 8.4%)','Mild CKD (eGFR 62)'],
-    vitals:{temp:'36.8',bp:'158/96',hr:'78',rr:'16',spo2:'98',weight:'84',gcs:'15'},
-    lastVisit:'Yesterday 14:30', lastClinician:'Dr. S. Boateng', lastFacility:'KATH Chronic Disease Clinic',
-    dx:'Hypertension + Type 2 Diabetes - chronic follow-up',
-    encounters:[
-      {date:'Yesterday 14:30',type:'Chronic Clinic',facility:'KATH',clinician:'Dr. S. Boateng',icd:'BA00+5A11',dx:'Hypertension + T2DM - quarterly review',rx:'Amlodipine 10mg OD, Metformin 1g BD, Lisinopril 10mg OD',nhis:'CLM-24-08411',status:'Pending'},
-      {date:'15 Jan 2026',type:'Chronic Clinic',facility:'KATH',clinician:'Dr. S. Boateng',icd:'BA00',dx:'Hypertension - BP improving on treatment',rx:'Medications continued - dose unchanged',nhis:'CLM-26-01201',status:'NHIS approved'},
-      {date:'10 Oct 2025',type:'OPD',facility:'KATH',clinician:'Dr. K. Osei',icd:'5A11',dx:'DKA - mild. Admitted 2 days.',rx:'IV fluids, insulin correction, diet counselling',nhis:'CLM-25-10842',status:'NHIS approved'}
-    ],
-    labs:[
-      {date:'Yesterday',test:'HbA1c %',result:'8.4',flag:'H',ref:'<7.0'},
-      {date:'Yesterday',test:'FBG mmol/L',result:'9.8',flag:'H',ref:'3.9-6.1'},
-      {date:'Yesterday',test:'Creatinine umol/L',result:'128',flag:'H',ref:'62-106'},
-      {date:'Yesterday',test:'eGFR mL/min',result:'62',flag:'L',ref:'>60 (borderline)'},
-      {date:'Yesterday',test:'BP mmHg',result:'158/96',flag:'H',ref:'<130/80'},
-      {date:'15 Jan 2026',test:'HbA1c %',result:'8.9',flag:'H',ref:'<7.0'},
-      {date:'15 Jan 2026',test:'Urine ACR',result:'35mg/g',flag:'H',ref:'<30mg/g'}
-    ],
-    medications:[
-      {drug:'Amlodipine 5mg',dose:'2 tabs OD morning',dur:'Ongoing',start:'Jan 2024',status:'Active',prescriber:'Dr. S. Boateng'},
-      {drug:'Metformin 500mg',dose:'2 tabs BD with meals',dur:'Ongoing',start:'Mar 2023',status:'Active',prescriber:'Dr. S. Boateng'},
-      {drug:'Lisinopril 10mg',dose:'1 tab OD morning',dur:'Ongoing',start:'Jan 2024',status:'Active',prescriber:'Dr. S. Boateng'},
-      {drug:'Atorvastatin 20mg',dose:'1 tab OD night',dur:'Ongoing',start:'Jun 2024',status:'Active',prescriber:'Dr. S. Boateng'}
-    ],
-    immunisations:[
-      {vaccine:'Influenza',date:'2024',site:'KATH',lot:'INF-2402'},
-      {vaccine:'Pneumococcal (PCV13)',date:'2023',site:'KATH',lot:'PCV-2311'}
-    ],
-    referrals:[
-      {date:'Yesterday',to:'Nephrology',reason:'CKD monitoring - eGFR trending down, ACR elevated',urgent:false},
-      {date:'Yesterday',to:'Ophthalmology',reason:'Annual diabetic retinopathy screening due',urgent:false}
-    ],
-    demographics:{
-      ethnicity:'Akan (Asante)', language:'Twi (Asante)', religion:'Christian - Protestant',
-      education:'Diploma / HND', occupation:'Civil Servant / Government',
-      employer:'Ghana Health Service - District Office', income:'3,000 - 6,000 GHC/month',
-      nokName:'Adwoa Agyemang', nokRel:'Spouse', nokPhone:'+233 24 780 2211',
-      marital:'Married', nationality:'Ghanaian', restype:'Urban',
-      address:'Plot 14, Adum Residential, Kumasi Metro',
-      gps:'AK-344-2291', chps:'Adum CHPS Compound', literacy:'High - literate in English',
-      smokingStatus:'Ex-smoker (stopped 2019)', alcoholUse:'Occasional (less than weekly)',
-      malariaPrevention:'Sleeps under ITN'
-    },
-    familyHistory:[
-      {relation:'Father', condition:'Type 2 Diabetes + hypertension', ageAtDiagnosis:'50', deceased:true, notes:'Died age 68 - myocardial infarction'},
-      {relation:'Mother', condition:'Hypertension + stroke', ageAtDiagnosis:'55', deceased:true, notes:'Fatal stroke age 72'},
-      {relation:'Elder Brother', condition:'Type 2 Diabetes', ageAtDiagnosis:'52', deceased:false, notes:'On insulin - poorly controlled'},
-      {relation:'Sister', condition:'Breast cancer', ageAtDiagnosis:'44', deceased:false, notes:'Currently on chemotherapy at KATH'}
-    ],
-    medicalHistory:[
-      {year:'2019-present', condition:'Hypertension Grade 2', treatment:'Amlodipine 10mg + Lisinopril 10mg', status:'Active - partially controlled', notes:'Target BP below 130/80 - currently 158/96'},
-      {year:'2021-present', condition:'Type 2 Diabetes Mellitus', treatment:'Metformin 1g BD + Atorvastatin', status:'Active - suboptimal control', notes:'HbA1c 8.4% - target below 7%'},
-      {year:'2023-present', condition:'Chronic Kidney Disease Stage 2', treatment:'Lisinopril renoprotection + dietary restriction', status:'Active - monitoring', notes:'eGFR 62 - ACR 35mg/g - nephrology referred'},
-      {year:'2022', condition:'Mild DKA', treatment:'IV fluids + insulin correction - 2-day admission', status:'Resolved', notes:'Precipitated by acute gastroenteritis with medication non-adherence'},
-      {year:'2018', condition:'Gout - acute flare', treatment:'Colchicine + allopurinol maintenance', status:'Resolved - on maintenance', notes:'Uric acid 520 - dietary modification advised'}
-    ],
-    imagingStudies:[
-      {date:'15 Jan 2026', modality:'ECG (12-lead)', indication:'HTN monitoring + chest pain screen', findings:'LVH by voltage criteria (Sokolow-Lyon positive). Sinus rhythm 78bpm. No ischaemic changes. QTc 428ms.', radiologist:'Dr. S. Boateng - KATH Cardiology', status:'Final'},
-      {date:'Oct 2025', modality:'Renal USS', indication:'CKD evaluation', findings:'Kidneys normal size bilaterally (right 10.8cm, left 11.1cm). Increased cortical echogenicity bilaterally consistent with medical renal disease. No hydronephrosis.', radiologist:'Dr. K. Mensah - KATH Radiology', status:'Final'},
-      {date:'Jun 2024', modality:'Echo (transthoracic)', indication:'LVH assessment on ECG', findings:'Concentric LVH. EF 58% (preserved). Grade 1 diastolic dysfunction. No valvular pathology.', radiologist:'Dr. S. Boateng - Cardiology', status:'Final'}
-    ],
-    surgicalHistory:[
-      {date:'2004', procedure:'Open appendicectomy', indication:'Acute appendicitis', surgeon:'Dr. Amankwah - KATH General Surgery', anaesthesia:'General', outcome:'Uncomplicated', complications:'Superficial wound infection - resolved with antibiotics', hospital:'Komfo Anokye Teaching Hospital'},
-      {date:'1998', procedure:'Right inguinal hernia repair (open)', indication:'Symptomatic inguinal hernia', surgeon:'Registrar - KATH', anaesthesia:'Spinal', outcome:'Uncomplicated', complications:'None', hospital:'Komfo Anokye Teaching Hospital'}
-    ],
-    soap:{s:'58M with 5-year history of HTN and 3-year history of T2DM presenting for quarterly review. Reports good tablet compliance. No chest pain, no SOB, no visual changes. Mildly increased thirst.',o:'Temp 36.8, BP 158/96 (was 162/100 last visit), HR 78, Weight 84kg (up 2kg). Fundoscopy deferred. Foot exam: intact sensation bilaterally.',a:'1. Hypertension - Grade 2, BP suboptimal but improving. 2. T2DM - HbA1c 8.4%, above target. 3. CKD Stage 2 - stable eGFR but ACR elevated, nephrology referral made.',p:'1. Increase Amlodipine to 10mg OD. 2. Continue Metformin - check eGFR in 3 months. 3. Add empagliflozin 10mg OD if eGFR stable (renal + cardiac benefit). 4. Nephrology referral - ACR elevated. 5. Ophthalmology referral - annual retinopathy screen. 6. Review in 3 months with HbA1c, renal panel.'}
-  },
-  {
-    id:'PT-00290', name:'Abena Owusu', age:26, sex:'F', dob:'22 Aug 1998',
-    region:'Western', district:'Sekondi-Takoradi', facility:'Effia-Nkwanta Regional Hospital',
-    nhis:'GH-NHIS-3301029', ghanaCard:'GHA-308820-5', phone:'+233 27 334 5612',
-    blood:'B+', weight:'71kg', height:'160cm', bmi:'27.7',
-    status:'Pregnant', stcls:'bb',
-    allergies:['No known drug allergies'],
-    conditions:['Primi gravida - 28 weeks','Mild pre-gestational anaemia (Hb 10.2)'],
-    vitals:{temp:'36.6',bp:'110/70',hr:'84',rr:'18',spo2:'99',weight:'71',gcs:'15'},
-    lastVisit:'29 Apr 10:15', lastClinician:'Midwife A. Quaye', lastFacility:'Effia-Nkwanta Regional',
-    dx:'ANC Visit 4 - 28 weeks gestation - uncomplicated',
-    encounters:[
-      {date:'29 Apr 10:15',type:'ANC Visit 4',facility:'Effia-Nkwanta',clinician:'Midwife A. Quaye',icd:'JA65Z',dx:'ANC 28 weeks - uncomplicated',rx:'Ferrous sulphate 200mg BD, Folic acid 5mg OD, Calcium 600mg BD',nhis:'CLM-24-08410',status:'NHIS approved'},
-      {date:'11 Mar 2026',type:'ANC Visit 3',facility:'Effia-Nkwanta',clinician:'Midwife A. Quaye',icd:'JA65Z',dx:'ANC 24 weeks - uncomplicated',rx:'Continue iron + folate. USS booked.',nhis:'CLM-26-03104',status:'NHIS approved'},
-      {date:'28 Jan 2026',type:'ANC Visit 2',facility:'Effia-Nkwanta',clinician:'Midwife A. Quaye',icd:'JA65Z',dx:'ANC 18 weeks - USS normal. Fetal movement good.',rx:'Continue antenatal supplements',nhis:'CLM-26-01882',status:'NHIS approved'},
-      {date:'14 Dec 2025',type:'ANC Visit 1',facility:'Effia-Nkwanta',clinician:'Midwife A. Quaye',icd:'JA65Z',dx:'Booking visit - 12 weeks. All baseline tests normal except Hb 10.2.',rx:'Start iron + folate + calcium. TT given.',nhis:'CLM-25-12401',status:'NHIS approved'}
-    ],
-    labs:[
-      {date:'29 Apr',test:'BP mmHg',result:'110/70',flag:'N',ref:'<140/90'},
-      {date:'29 Apr',test:'Urine protein',result:'Negative',flag:'N',ref:'Negative'},
-      {date:'29 Apr',test:'Urine glucose',result:'Trace',flag:'L',ref:'Negative'},
-      {date:'29 Apr',test:'Fundal height',result:'28cm (= dates)',flag:'N',ref:'= dates +/- 2cm'},
-      {date:'11 Mar',test:'Hb g/dL',result:'10.8',flag:'L',ref:'11.0+ in pregnancy'},
-      {date:'28 Jan',test:'Fetal USS 18wk',result:'Normal - singleton - no anomalies',flag:'N',ref:'Normal'},
-      {date:'14 Dec',test:'Hb g/dL (booking)',result:'10.2',flag:'L',ref:'11.0+ in pregnancy'}
-    ],
-    medications:[
-      {drug:'Ferrous sulphate 200mg',dose:'1 tab BD with orange juice',dur:'Until delivery',start:'14 Dec 2025',status:'Active',prescriber:'Midwife A. Quaye'},
-      {drug:'Folic acid 5mg',dose:'1 tab OD',dur:'Until delivery',start:'14 Dec 2025',status:'Active',prescriber:'Midwife A. Quaye'},
-      {drug:'Calcium 600mg',dose:'1 tab BD',dur:'Until delivery',start:'29 Apr 2026',status:'Active',prescriber:'Midwife A. Quaye'}
-    ],
-    immunisations:[
-      {vaccine:'Tetanus toxoid TT2',date:'29 Apr 2026',site:'Effia-Nkwanta',lot:'TT-2604'},
-      {vaccine:'Tetanus toxoid TT1',date:'14 Dec 2025',site:'Effia-Nkwanta',lot:'TT-2511'}
-    ],
-    referrals:[],
-    demographics:{
-      ethnicity:'Fante', language:'Fante', religion:'Christian - Catholic',
-      education:'Senior High School (SHS)', occupation:'Petty trader',
-      employer:'Self-employed - Takoradi Market Circle', income:'800 - 1,500 GHC/month',
-      nokName:'Kwesi Owusu', nokRel:'Spouse', nokPhone:'+233 27 543 9012',
-      marital:'Married', nationality:'Ghanaian', restype:'Peri-urban',
-      address:'Assakae Street, Takoradi, Sekondi-Takoradi',
-      gps:'WT-220-5541', chps:'Assakae CHPS Zone', literacy:'Moderate',
-      smokingStatus:'Never smoked', alcoholUse:'None', malariaPrevention:'Sleeps under ITN'
-    },
-    familyHistory:[
-      {relation:'Mother', condition:'Gestational diabetes (3 pregnancies)', ageAtDiagnosis:'late 20s', deceased:false, notes:'No post-pregnancy diabetes - screening advised for patient'},
-      {relation:'Maternal Aunt', condition:'Pre-eclampsia - severe', ageAtDiagnosis:'first pregnancy', deceased:false, notes:'Emergency LSCS - both survived'},
-      {relation:'Father', condition:'Hypertension', ageAtDiagnosis:'55', deceased:false, notes:'On treatment'},
-      {relation:'Paternal Grandfather', condition:'Diabetes + amputation', ageAtDiagnosis:'60s', deceased:true, notes:'Below-knee amputation - died diabetic complications'}
-    ],
-    medicalHistory:[
-      {year:'2025-present', condition:'Primigravida - current pregnancy (28 weeks)', treatment:'Antenatal care - iron, folate, calcium', status:'Active - ongoing', notes:'ANC booking at 12 weeks - 4 ANC visits completed - uncomplicated so far'},
-      {year:'Dec 2025', condition:'Mild iron-deficiency anaemia (Hb 10.2 at booking)', treatment:'Ferrous sulphate 200mg BD', status:'Improving - Hb 10.8 at 24 weeks', notes:'Target Hb above 11.0 by 32 weeks'},
-      {year:'2023', condition:'Urinary tract infection in pregnancy (first pregnancy - miscarried)', treatment:'Amoxicillin 7-day course', status:'Resolved', notes:'First pregnancy ended in miscarriage at 10 weeks - cause unknown'},
-      {year:'2020', condition:'Pelvic inflammatory disease (PID)', treatment:'Doxycycline + Metronidazole 14-day course', status:'Resolved', notes:'No chronic pelvic pain sequelae reported'}
-    ],
-    imagingStudies:[
-      {date:'28 Jan 2026', modality:'Obstetric USS (18 weeks)', indication:'Anomaly scan', findings:'Single viable fetus. Crown-rump satisfactory for 18+2 weeks. No structural anomalies detected. Posterior placenta - grade 1. Amniotic fluid normal. Cervical length 38mm - reassuring.', radiologist:'Midwife USS service - Effia-Nkwanta', status:'Final'},
-      {date:'14 Dec 2025', modality:'Obstetric USS (dating scan - 12 weeks)', indication:'Confirm gestation and viability', findings:'Single viable fetus. CRL consistent with 12+1 weeks. Normal NT 1.6mm. Nasal bone present. Twins excluded.', radiologist:'Midwife USS service - Effia-Nkwanta', status:'Archived'}
-    ],
-    surgicalHistory:[
-      {date:'No prior surgeries', procedure:'Nil', indication:'Nil', surgeon:'--', anaesthesia:'--', outcome:'N/A', complications:'N/A', hospital:'N/A'}
-    ],
-    soap:{s:'26F gravida 1 para 0 at 28 weeks by dates. Presenting for scheduled ANC visit 4. Reports good fetal movements. No headache, no visual disturbance, no epigastric pain. No per vaginal bleeding or discharge. Baby moving well.',o:'BP 110/70, HR 84, Temp 36.6, Weight 71kg (+3kg since last visit - appropriate). Fundal height 28cm = dates. Fetal heart tones: regular at 144 bpm. Urine dipstick: protein negative, glucose trace. No oedema.',a:'Uncomplicated primigravida at 28 weeks. Mild anaemia improving on iron supplementation. On track for term delivery.',p:'1. Continue ferrous sulphate 200mg BD + folic acid 5mg OD + calcium 600mg BD. 2. TT2 given today. 3. Book glucose tolerance test (GDM screen) for 28 weeks. 4. Advise re: danger signs - bleeding, severe headache, reduced fetal movement. 5. Next ANC visit at 32 weeks. 6. Antenatal education - birth preparedness.'}
-  },
-  {
-    id:'PT-00511', name:'Kwame Darko', age:7, sex:'M', dob:'15 Jun 2018',
-    region:'Northern', district:'Tamale Metro', facility:'Tamale Teaching Hospital',
-    nhis:'GH-NHIS-4418873', ghanaCard:'GHA-420044-1', phone:'+233 20 889 1234',
-    blood:'AS', weight:'22kg', height:'118cm', bmi:'15.8',
-    status:'Inpatient', stcls:'br',
-    allergies:['No known drug allergies'],
-    conditions:['Sickle cell trait (AS)','Severe P.falciparum malaria - Day 2 admission'],
-    vitals:{temp:'39.2',bp:'90/60',hr:'130',rr:'28',spo2:'94',weight:'22',gcs:'13'},
-    lastVisit:'28 Apr 16:45', lastClinician:'Dr. P. Alhassan', lastFacility:'Tamale Teaching Hospital - Paediatric Ward',
-    dx:'Severe P.falciparum Malaria - cerebral malaria features - Day 2',
-    encounters:[
-      {date:'28 Apr 16:45',type:'Emergency / Inpatient',facility:'Tamale Teaching',clinician:'Dr. P. Alhassan',icd:'1F40.1',dx:'Severe malaria - cerebral features - reduced GCS',rx:'IV Artesunate 2.4mg/kg loading, IV fluids, anti-seizure cover',nhis:'CLM-24-08409',status:'Pending'},
-      {date:'12 Feb 2026',type:'OPD',facility:'Tamale Teaching',clinician:'Dr. P. Alhassan',icd:'1F40',dx:'Uncomplicated malaria - 3rd episode this year',rx:'AL treatment',nhis:'CLM-26-02115',status:'NHIS approved'},
-      {date:'04 Nov 2025',type:'OPD',facility:'Tamale Teaching',clinician:'Dr. K. Ibrahim',icd:'1F40',dx:'Uncomplicated malaria',rx:'AL treatment completed',nhis:'CLM-25-11044',status:'NHIS approved'}
-    ],
-    labs:[
-      {date:'28 Apr',test:'Blood film',result:'P.falciparum ++++ heavy parasitaemia',flag:'H',ref:'Negative'},
-      {date:'28 Apr',test:'Hb g/dL',result:'7.1',flag:'L',ref:'10.0-14.0 (paed)'},
-      {date:'28 Apr',test:'Blood glucose',result:'2.8 mmol/L',flag:'L',ref:'3.9-6.1'},
-      {date:'28 Apr',test:'GCS',result:'13/15',flag:'L',ref:'15/15'},
-      {date:'28 Apr',test:'Malaria Ag (RDT)',result:'POSITIVE - Pf HRP2',flag:'H',ref:'Negative'},
-      {date:'28 Apr',test:'WBC x10/L',result:'14.2',flag:'H',ref:'5.0-15.0'},
-      {date:'28 Apr',test:'Lactate mmol/L',result:'3.8',flag:'H',ref:'<2.0'}
-    ],
-    medications:[
-      {drug:'IV Artesunate 2.4mg/kg',dose:'60mg IV Q12h',dur:'Until able to switch to oral',start:'28 Apr',status:'Active',prescriber:'Dr. P. Alhassan'},
-      {drug:'Dextrose 10% IV',dose:'5ml/kg/hr',dur:'Until glucose normalised',start:'28 Apr',status:'Active',prescriber:'Dr. P. Alhassan'},
-      {drug:'Phenobarbitone IV',dose:'15mg/kg loading - seizure prophylaxis',dur:'Single dose',start:'28 Apr',status:'Given',prescriber:'Dr. P. Alhassan'}
-    ],
-    immunisations:[
-      {vaccine:'BCG',date:'2018',site:'Tamale Teaching',lot:'BCG-1807'},
-      {vaccine:'Penta3 + PCV3',date:'2018',site:'CHPS Compound',lot:'PENTA-1811'},
-      {vaccine:'Measles + Yellow Fever',date:'2019',site:'CHPS Compound',lot:'MV-1904'},
-      {vaccine:'Malaria (R21/Matrix-M)',date:'2023',site:'Tamale Teaching',lot:'R21-2310'}
-    ],
-    referrals:[
-      {date:'28 Apr',to:'Paediatric ICU',reason:'Cerebral malaria - GCS 13, seizure risk, hypoglycaemia',urgent:true}
-    ],
-    demographics:{
-      ethnicity:'Dagbani', language:'Dagbani', religion:'Muslim - Sunni',
-      education:'Primary school (completed)', occupation:'Student',
-      employer:'Tamale D/A Primary School - Class 2', income:'N/A (child)',
-      nokName:'Fatima Darko', nokRel:'Mother', nokPhone:'+233 20 889 1234',
-      marital:'N/A (minor)', nationality:'Ghanaian', restype:'Urban',
-      address:'Nyohini Community, Tamale Metro',
-      gps:'NR-441-2290', chps:'Nyohini CHPS Zone', literacy:'Low - child',
-      smokingStatus:'N/A (child)', alcoholUse:'N/A (child)', malariaPrevention:'Sleeps under ITN - inconsistent use reported'
-    },
-    familyHistory:[
-      {relation:'Father', condition:'Sickle cell trait (AS)', ageAtDiagnosis:'childhood screening', deceased:false, notes:'Asymptomatic carrier'},
-      {relation:'Mother', condition:'Sickle cell trait (AS)', ageAtDiagnosis:'childhood screening', deceased:false, notes:'Asymptomatic carrier'},
-      {relation:'Elder Sister', condition:'Sickle cell disease (SS)', ageAtDiagnosis:'newborn screening', deceased:false, notes:'On hydroxyurea - regular follow-up at KATH'},
-      {relation:'Paternal Uncle', condition:'Cerebral malaria (childhood)', ageAtDiagnosis:'5 years', deceased:false, notes:'Full recovery - no neurological sequelae'}
-    ],
-    medicalHistory:[
-      {year:'2026 (current)', condition:'Severe P.falciparum malaria - cerebral features', treatment:'IV Artesunate + D10% + seizure prophylaxis', status:'Active inpatient', notes:'Day 2 admission - GCS improving from 13/15'},
-      {year:'Feb 2026', condition:'Uncomplicated P.falciparum malaria (3rd episode)', treatment:'Artemether-Lumefantrine completed', status:'Resolved', notes:'3rd episode in 12 months - ITN use counselled'},
-      {year:'Nov 2025', condition:'Uncomplicated P.falciparum malaria (2nd episode)', treatment:'AL completed', status:'Resolved', notes:'Rapid recovery - no complications'},
-      {year:'2024', condition:'Acute lower respiratory tract infection', treatment:'Amoxicillin 7-day course', status:'Resolved', notes:'Fever + cough + wheeze - resolved fully'},
-      {year:'2023', condition:'Protein-energy malnutrition (moderate)', treatment:'RUTF supplementation + nutrition counselling', status:'Resolved', notes:'MUAC was 11.8cm - improved to 13.5cm after 3 months RUTF'},
-      {year:'2021', condition:'Measles (before vaccination)', treatment:'Supportive care + Vitamin A', status:'Resolved', notes:'Mild case - no complications - now immunised'}
-    ],
-    imagingStudies:[
-      {date:'28 Apr 2026', modality:'Chest X-Ray (AP)', indication:'Respiratory compromise assessment in severe malaria', findings:'No consolidation. No cardiomegaly. Lung fields clear. Diaphragm normal. No pleural effusion.', radiologist:'Dr. P. Alhassan - Tamale Teaching', status:'Final'},
-      {date:'28 Apr 2026', modality:'Cranial USS (bedside)', indication:'Cerebral malaria - intracranial pressure assessment', findings:'Cerebral oedema - sulci partially effaced. No midline shift. No haemorrhage detected. Lateral ventricles slightly compressed.', radiologist:'Dr. P. Alhassan - bedside point-of-care USS', status:'Preliminary - formal CT pending if deterioration'}
-    ],
-    surgicalHistory:[
-      {date:'No prior surgeries', procedure:'Nil', indication:'Nil', surgeon:'--', anaesthesia:'--', outcome:'N/A', complications:'N/A', hospital:'N/A'}
-    ],
-    soap:{s:'7-year-old male brought by mother with 2-day history of fever, progressive drowsiness, and one witnessed convulsion lasting 2 minutes. History of recurrent malaria (3rd episode this year). Sickle cell trait known.',o:'Temp 39.2, BP 90/60 (borderline low for age), HR 130, RR 28, SpO2 94% on air, Weight 22kg, GCS 13/15 (E3V4M6). Blood glucose 2.8 - hypoglycaemic. Heavy parasitaemia on film. Lactate 3.8.',a:'Severe P.falciparum malaria (ICD-11: 1F40.1) with: (1) Impaired consciousness (GCS 13) - cerebral malaria features. (2) Hypoglycaemia. (3) Hyperparasitaemia. PICU referral made.',p:'1. IV Artesunate 2.4mg/kg Q12h. 2. Correct hypoglycaemia - D10% infusion. 3. Seizure prophylaxis - phenobarbitone given. 4. Strict fluid balance - avoid overhydration. 5. Blood transfusion if Hb falls below 6. 6. PICU referral. 7. Monitor GCS hourly. 8. Notify parents of severity.'}
-  },
-  {
-    id:'PT-00199', name:'Ama Boateng', age:45, sex:'F', dob:'03 Feb 1980',
-    region:'Central', district:'Cape Coast Metro', facility:'Cape Coast Teaching Hospital',
-    nhis:'GH-NHIS-5527614', ghanaCard:'GHA-512340-9', phone:'+233 24 290 4401',
-    blood:'O-', weight:'72kg', height:'163cm', bmi:'27.1',
-    status:'Follow-up', stcls:'bp',
-    allergies:['Aspirin - GI intolerance'],
-    conditions:['VIA positive - awaiting biopsy','Hypertension (well-controlled)'],
-    vitals:{temp:'36.5',bp:'128/82',hr:'72',rr:'16',spo2:'99',weight:'72',gcs:'15'},
-    lastVisit:'26 Apr 11:00', lastClinician:'Dr. R. Mensah-Bonsu', lastFacility:'CCTH Gynaecology',
-    dx:'VIA positive cervical lesion - colposcopy-directed biopsy pending',
-    encounters:[
-      {date:'26 Apr 11:00',type:'Gynaecology OPD',facility:'CCTH',clinician:'Dr. R. Mensah-Bonsu',icd:'XH5BX3',dx:'VIA positive - acetowhite lesion noted at transformation zone',rx:'Biopsy booked for 12 May 2026',nhis:'CLM-24-08408',status:'NHIS approved'},
-      {date:'Chronic Clinic',type:'Chronic Clinic',facility:'CCTH',clinician:'Dr. A. Koomson',icd:'BA00',dx:'Hypertension - well-controlled on Amlodipine',rx:'Continue Amlodipine 5mg OD',nhis:'--',status:'Not Started'}
-    ],
-    labs:[
-      {date:'26 Apr',test:'VIA result',result:'POSITIVE - acetowhite area at TZ',flag:'H',ref:'Negative (VIA negative)'},
-      {date:'26 Apr',test:'HIV RDT',result:'Negative',flag:'N',ref:'Negative'},
-      {date:'26 Apr',test:'BP mmHg',result:'128/82',flag:'N',ref:'<130/80 (borderline)'},
-      {date:'26 Apr',test:'Pap smear',result:'Awaiting result',flag:'P',ref:'Normal cells'}
-    ],
-    medications:[
-      {drug:'Amlodipine 5mg',dose:'1 tab OD morning',dur:'Ongoing',start:'Feb 2024',status:'Active',prescriber:'Dr. A. Koomson'}
-    ],
-    immunisations:[
-      {vaccine:'HPV (Cervarix)',date:'Not received - above age 26',site:'--',lot:'--'}
-    ],
-    referrals:[
-      {date:'26 Apr',to:'Colposcopy Clinic',reason:'VIA positive - biopsy and cryotherapy assessment',urgent:false}
-    ],
-    demographics:{
-      ethnicity:'Fante', language:'Fante', religion:'Christian - Protestant',
-      education:'Undergraduate degree', occupation:'Teacher',
-      employer:'Cape Coast Anglican Primary School', income:'1,500 - 3,000 GHC/month',
-      nokName:'Kwesi Boateng', nokRel:'Spouse', nokPhone:'+233 24 290 0011',
-      marital:'Married', nationality:'Ghanaian', restype:'Urban',
-      address:'Teachers Quarters, Cape Coast Metro',
-      gps:'CP-112-7741', chps:'Teachers Quarters CHPS', literacy:'High - literate in English',
-      smokingStatus:'Never smoked', alcoholUse:'Occasional (less than weekly)',
-      malariaPrevention:'Sleeps under ITN'
-    },
-    familyHistory:[
-      {relation:'Mother', condition:'Cervical cancer (treated)', ageAtDiagnosis:'48', deceased:false, notes:'Treated with radiotherapy 2008 - in remission - strengthens screening urgency for patient'},
-      {relation:'Father', condition:'Hypertension + Type 2 Diabetes', ageAtDiagnosis:'52', deceased:false, notes:'On treatment - reasonable control'},
-      {relation:'Sister', condition:'Breast cancer', ageAtDiagnosis:'40', deceased:false, notes:'Right mastectomy 2022 - currently in remission'},
-      {relation:'Paternal Aunt', condition:'Ovarian cancer', ageAtDiagnosis:'55', deceased:true, notes:'Died 14 months after diagnosis'}
-    ],
-    medicalHistory:[
-      {year:'2024-present', condition:'Hypertension Stage 1', treatment:'Amlodipine 5mg OD', status:'Active - well controlled', notes:'BP 128/82 on treatment - target below 130/80'},
-      {year:'2026 (current)', condition:'VIA positive cervical lesion - under investigation', treatment:'Biopsy booked 12 May 2026', status:'Active - under investigation', notes:'Acetowhite area at TZ involving 2 quadrants - biopsy will determine CIN grade'},
-      {year:'2021', condition:'Anaemia (Hb 9.6 - post-menstrual heavy bleeding)', treatment:'Ferrous sulphate 3-month course', status:'Resolved', notes:'Heavy menstrual bleeding was the cause - referred to gynaecology at that time'},
-      {year:'2018', condition:'Uterine fibroid (single intramural)', treatment:'Watchful waiting - repeat USS', status:'Stable', notes:'3cm fibroid on USS 2018 - repeat USS 2021 showed no growth - continues monitoring'},
-      {year:'2012', condition:'Urinary tract infection (recurrent x3 same year)', treatment:'Culture-directed antibiotics each episode', status:'Resolved', notes:'All episodes E.coli sensitive to trimethoprim - no recurrence since 2014'}
-    ],
-    imagingStudies:[
-      {date:'26 Apr 2026', modality:'Colposcopy', indication:'VIA positive - colposcopic assessment', findings:'Acetowhite area at squamocolumnar junction involving 2 quadrants of transformation zone. Dense acetowhitening. No punctation or mosaic noted. Biopsy taken x2 - awaiting histology.', radiologist:'Dr. R. Mensah-Bonsu - CCTH Gynaecology', status:'Histology pending - 12 May 2026'},
-      {date:'Nov 2021', modality:'Pelvic USS (transvaginal)', indication:'Heavy menstrual bleeding + fibroid follow-up', findings:'Uterus anteverted. Single intramural fibroid 2.8cm (was 3.0cm 2018 - stable). Normal endometrial thickness 8mm. Both ovaries normal. No free fluid.', radiologist:'Dr. A. Koomson - CCTH Radiology', status:'Final'},
-      {date:'Jun 2018', modality:'Pelvic USS', indication:'Pelvic pain + heavy periods', findings:'Single intramural fibroid 3.0cm right uterine wall. Normal ovaries. No other pathology.', radiologist:'CCTH Radiology', status:'Archived'}
-    ],
-    surgicalHistory:[
-      {date:'2006', procedure:'Diagnostic laparoscopy', indication:'Chronic pelvic pain - endometriosis query', surgeon:'Dr. A. Mensah - CCTH Gynaecology', anaesthesia:'General', outcome:'No endometriosis found. Mild pelvic adhesions only.', complications:'None', hospital:'Cape Coast Teaching Hospital'},
-      {date:'2002', procedure:'Tonsillectomy', indication:'Recurrent tonsillitis (7 episodes in 2 years)', surgeon:'ENT registrar - CCTH', anaesthesia:'General', outcome:'Uncomplicated - no recurrence', complications:'None', hospital:'Cape Coast Teaching Hospital'}
-    ],
-    soap:{s:'45F presenting for cervical cancer screening. No symptoms - routine screening. History of hypertension on Amlodipine. No abnormal vaginal bleeding. 4 children, LMP 2 weeks ago, regular cycle.',o:'BP 128/82, HR 72, Temp 36.5, Weight 72kg. Abdominal exam normal. Speculum exam: cervix well visualised. VIA performed - acetowhite area noted at transformation zone, involving approximately 2 quadrants. HIV test negative.',a:'VIA positive cervical lesion (ICD-11: XH5BX3). Requires colposcopy-directed biopsy to exclude CIN2/CIN3 or early invasive cancer. Hypertension well-controlled.',p:'1. Colposcopy clinic referral - biopsy 12 May 2026. 2. Explain findings and reassure - VIA positive does not mean cancer. 3. Continue Amlodipine 5mg OD. 4. Return results to patient at colposcopy appointment. 5. Advise re: partner notification for STI screening.'}
-  }
-];
+var EHR_PTS = [];  // demo EHR records cleared — register populates live from /api/ehr/patients
 
 // -- EHR module state -------------------------------------------------
 var ehrCurrentPt = null;
@@ -2849,12 +2503,17 @@ function buildEHR() {
   hdr.appendChild(el('div', {cls:'psub'}, 'HL7 FHIR R4 - Ghana Card biometric - Offline-first - 100% Ghana-hosted - Data Protection Act 2012 compliant'));
   pane.appendChild(hdr);
 
-  // KPI bar
+  // KPI bar — derived from live EHR data (0 until records exist)
+  var totalPts = EHR_PTS.length;
+  var opdToday = EHR_PTS.filter(function(p){ return /^today/i.test(p.lastVisit || ''); }).length;
+  var nhisCount = EHR_PTS.filter(function(p){ return !!p.nhis; }).length;
+  var nhisPct = totalPts ? Math.round(nhisCount / totalPts * 100) + '%' : '0%';
+  function ehrCount(s){ return EHR_PTS.filter(function(p){ return p.status === s; }).length; }
   var krow = el('div', {cls:'g4', style:{marginBottom:'1.25rem'}});
-  krow.appendChild(kpiCard('jade', 'Registered Patients', '142,807', 'Active patient identities', '+ 312 today', 'up'));
-  krow.appendChild(kpiCard('gold', 'OPD Today', '1,082', 'Across 13 pilot facilities', '+ 4.2% vs yesterday', 'up'));
-  krow.appendChild(kpiCard('sky',  'NHIS Coverage', '63%', 'Active NHIS members', 'Target: 80% by 2030', 'nt'));
-  krow.appendChild(kpiCard('red',  'Pending Referrals', '24', 'Awaiting facility response', '2 urgent', 'dn'));
+  krow.appendChild(kpiCard('jade', 'Registered Patients', String(totalPts), 'Active patient identities', '', 'nt'));
+  krow.appendChild(kpiCard('gold', 'OPD Today', String(opdToday), 'Across pilot facilities', '', 'nt'));
+  krow.appendChild(kpiCard('sky',  'NHIS Coverage', nhisPct, 'Active NHIS members', '', 'nt'));
+  krow.appendChild(kpiCard('red',  'Pending Referrals', '0', 'Awaiting facility response', '', 'nt'));
   pane.appendChild(krow);
 
   // Search bar + actions
@@ -2894,9 +2553,9 @@ function buildEHR() {
   var statsCard = el('div', {cls:'card'});
   statsCard.appendChild(sectionHeader('Quick Stats'));
   var sg = el('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.5rem'}});
-  [['Active','89,204','bg'],['Chronic','34,112','by'],['Pregnant','8,601','bb'],['Inpatient','1,890','br']].forEach(function(s){
+  [['Active',ehrCount('Active'),'bg'],['Chronic',ehrCount('Chronic'),'by'],['Pregnant',ehrCount('Pregnant'),'bb'],['Inpatient',ehrCount('Inpatient'),'br']].forEach(function(s){
     var sc = el('div', {cls:'card-sm', style:{textAlign:'center'}});
-    sc.appendChild(el('div', {style:{fontFamily:"'Syne',sans-serif",fontSize:'18px',fontWeight:'700',color:'var(--'+s[2].charAt(1)+'jade'||'jade'+')'}}, s[1]));
+    sc.appendChild(el('div', {style:{fontFamily:"'Syne',sans-serif",fontSize:'18px',fontWeight:'700',color:'var(--'+s[2].charAt(1)+'jade'||'jade'+')'}}, String(s[1])));
     sc.appendChild(badge(s[0], s[2]));
     sg.appendChild(sc);
   });
@@ -2925,6 +2584,11 @@ function renderEHRList(statusFilter) {
   if(!list) return;
   clr(list);
   var pts = statusFilter ? EHR_PTS.filter(function(p){ return p.status === statusFilter; }) : EHR_PTS;
+  if(!pts.length){
+    list.appendChild(el('div', {style:{color:'var(--muted)',fontSize:'12px',textAlign:'center',padding:'2.5rem 1rem',lineHeight:'1.6'}},
+      'No patient records yet. Records will appear here as patients are registered.'));
+    return;
+  }
   pts.forEach(function(p) {
     var isActive = ehrCurrentPt && ehrCurrentPt.id === p.id;
     var row2 = el('div', {
@@ -4277,10 +3941,10 @@ function buildNHIS() {
   hdr.appendChild(el('div',{cls:'psub'},'Automated claims - Fraud detection - 7-day payment target - Mobile Money integration'));
   pane.appendChild(hdr);
   var kpis=el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  kpis.appendChild(kpiCard('jade','Claims Today','1,204','Auto-submitted 98.4% valid','','up'));
-  kpis.appendChild(kpiCard('gold','Avg Processing','6.2 days','Target 7 days from 90+','','nt'));
-  kpis.appendChild(kpiCard('red','Fraud Flags','3','Ghost patient AI detection','','dn'));
-  kpis.appendChild(kpiCard('sky','This Month Value','GHC 2.1M','GHS claimed','','nt'));
+  kpis.appendChild(kpiCard('jade','Claims Today','0','—','','up'));
+  kpis.appendChild(kpiCard('gold','Avg Processing','—','Target 7 days from 90+','','nt'));
+  kpis.appendChild(kpiCard('red','Fraud Flags','0','Ghost patient AI detection','','dn'));
+  kpis.appendChild(kpiCard('sky','This Month Value','GHC 0','GHS claimed','','nt'));
   pane.appendChild(kpis);
   var left=el('div',{cls:'card'});
   left.appendChild(sectionHeader('Claims Queue'));
@@ -4333,7 +3997,7 @@ function buildNHIS() {
 
 function initNHISChart() {
   var c=document.getElementById('nhis-chart');
-  if(c) new Chart(c.getContext('2d'),{type:'line',data:{labels:['Apr 1','Apr 7','Apr 14','Apr 21','Apr 28','Apr 30'],datasets:[{label:'Submitted',data:[820,910,1050,1120,1180,1204],borderColor:'#2dd4bf',tension:.4,fill:false,pointRadius:3},{label:'Approved',data:[780,870,1005,1068,1124,1183],borderColor:'#4ade80',tension:.4,fill:false,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
+  if(c) new Chart(c.getContext('2d'),{type:'line',data:{labels:['Apr 1','Apr 7','Apr 14','Apr 21','Apr 28','Apr 30'],datasets:[{label:'Submitted',data:[0,0,0,0,0,0],borderColor:'#2dd4bf',tension:.4,fill:false,pointRadius:3},{label:'Approved',data:[0,0,0,0,0,0],borderColor:'#4ade80',tension:.4,fill:false,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:10}}}}}});
 }
 
 // ============================================================
@@ -4346,357 +4010,12 @@ function initNHISChart() {
 // ============================================================
 
 // ── Ghana STG 2023 Drug Database ──────────────────────────────
-var PH_DRUGS = [
-
-  // ── ANTIMALARIALS (Ch. 4) ────────────────────────────────
-  {id:'al_adult', cat:'Antimalarial', stg:'Ch.4.1',
-   name:'Artemether-Lumefantrine 20/120mg', brand:'Coartem', route:'Oral',
-   nhis:true, eml:true, stock:48, reorder:100, unit:'tablet',
-   indication:'Uncomplicated P. falciparum malaria — adults & children ≥5kg',
-   contraindications:['Severe hepatic impairment','First trimester pregnancy (caution)','History of QTc prolongation'],
-   interactions:['Halofantrine — avoid (QTc)','Mefloquine — caution','CYP3A4 inhibitors — monitor'],
-   sideEffects:['Headache','Dizziness','Nausea','QTc prolongation (rare)'],
-   dosing:[
-     {wt:'≥35 kg (adult)',dose:'4 tablets',freq:'BD',days:3,notes:'Total 24 tablets. Take with food or milk.'},
-     {wt:'25–34 kg',dose:'3 tablets',freq:'BD',days:3,notes:'Total 18 tablets. Take with food.'},
-     {wt:'15–24 kg',dose:'2 tablets',freq:'BD',days:3,notes:'Total 12 tablets.'},
-     {wt:'5–14 kg',dose:'1 tablet',freq:'BD',days:3,notes:'Total 6 tablets.'},
-   ],
-   icd11:'1F40', monitoring:'None for uncomplicated malaria. QTc if cardiac history.'},
-
-  {id:'artesunate_iv', cat:'Antimalarial', stg:'Ch.4.2',
-   name:'Artesunate IV/IM 60mg/vial', brand:'Artesun', route:'IV/IM',
-   nhis:true, eml:true, stock:22, reorder:50, unit:'vial',
-   indication:'Severe P. falciparum malaria — all ages — FIRST LINE',
-   contraindications:['Known hypersensitivity'],
-   interactions:['None clinically significant'],
-   sideEffects:['Haemolysis (post-treatment, monitor Hb)','Transient bradycardia'],
-   dosing:[
-     {wt:'All weights',dose:'2.4 mg/kg',freq:'IV: at 0h, 12h, 24h then daily',days:7,notes:'Switch to oral AL when tolerating. Monitor Hb at D7, D14, D28 (delayed haemolysis).'},
-   ],
-   icd11:'1F40.1', monitoring:'Hb at D7/D14/D28. Blood glucose (hypoglycaemia risk). Parasitaemia daily.'},
-
-  {id:'aaq', cat:'Antimalarial', stg:'Ch.4.1',
-   name:'Artesunate-Amodiaquine 100/270mg', brand:'ASAQ', route:'Oral',
-   nhis:true, eml:true, stock:64, reorder:80, unit:'tablet',
-   indication:'Uncomplicated P. falciparum malaria — alternative first-line Ghana STG 2023',
-   contraindications:['G6PD deficiency (relative)','Agranulocytosis history'],
-   interactions:['Efavirenz — avoid (hepatotoxicity)'],
-   sideEffects:['GI upset','Blurred vision','Pruritus'],
-   dosing:[
-     {wt:'Adults ≥36 kg',dose:'1 × 100/270mg tablet',freq:'OD',days:3,notes:''},
-     {wt:'18–35 kg',dose:'1 × 50/135mg tablet',freq:'OD',days:3,notes:''},
-   ],
-   icd11:'1F40', monitoring:'LFTs if prolonged use.'},
-
-  {id:'quinine', cat:'Antimalarial', stg:'Ch.4.2',
-   name:'Quinine sulphate 300mg tabs / IV 600mg', brand:'Quinine', route:'Oral/IV',
-   nhis:true, eml:true, stock:30, reorder:60, unit:'tablet',
-   indication:'Severe malaria (if artesunate unavailable) · Pregnancy (1st trimester uncomplicated)',
-   contraindications:['Myasthenia gravis','Haemolysis'],
-   interactions:['Digoxin — increases levels','Antacids — reduce absorption'],
-   sideEffects:['Cinchonism (tinnitus, headache)','Hypoglycaemia (IV)','QTc prolongation'],
-   dosing:[
-     {wt:'Adults',dose:'600mg (10 mg/kg) IV in 5% dextrose over 4h',freq:'Q8h',days:'Until oral',notes:'Load: 20 mg/kg IV over 4h, then 10 mg/kg Q8h. Always with dextrose. Monitor glucose hourly.'},
-     {wt:'Children',dose:'10 mg/kg IV in 5% dextrose over 4h',freq:'Q8h',days:'Until oral',notes:'Dilute carefully. Monitor glucose.'},
-   ],
-   icd11:'1F40.1', monitoring:'Blood glucose Q1h (IV). QTc. Quinine levels if prolonged.'},
-
-  // ── ANTIBIOTICS (Ch. 6) ──────────────────────────────────
-  {id:'amox_500', cat:'Antibiotic', stg:'Ch.6.1',
-   name:'Amoxicillin 500mg capsules', brand:'Generic', route:'Oral',
-   nhis:true, eml:true, stock:240, reorder:500, unit:'capsule',
-   indication:'RTI, UTI, otitis media, tonsillitis, community-acquired pneumonia (mild)',
-   contraindications:['Penicillin allergy — absolute contraindication'],
-   interactions:['Warfarin — monitor INR','OCP — counsel re: reduced efficacy','Allopurinol — rash risk'],
-   sideEffects:['Diarrhoea','Rash (if mononucleosis — avoid)','Nausea'],
-   dosing:[
-     {wt:'Adults',dose:'500 mg',freq:'TID',days:'5–7 (RTI), 7 (UTI), 10 (tonsillitis)',notes:'Take with or without food.'},
-     {wt:'Children >20 kg',dose:'250 mg',freq:'TID',days:'5–7',notes:'Use suspension for younger children.'},
-     {wt:'Pneumonia (severe)',dose:'1 g',freq:'TID',days:7,notes:'Or switch to IV amoxicillin 1g Q6h if not tolerating oral.'},
-   ],
-   icd11:'CA40', monitoring:'None for short courses. Renal dose reduction if eGFR <30.'},
-
-  {id:'augmentin', cat:'Antibiotic', stg:'Ch.6.1',
-   name:'Co-Amoxiclav 625mg (500/125mg)', brand:'Augmentin', route:'Oral',
-   nhis:true, eml:true, stock:88, reorder:150, unit:'tablet',
-   indication:'Complicated UTI, dental infections, skin & soft tissue, animal bites, RTI with beta-lactamase organisms',
-   contraindications:['Penicillin allergy','Jaundice/hepatic dysfunction from Co-Amoxiclav (previous)'],
-   interactions:['Warfarin — increases INR','Allopurinol — rash risk'],
-   sideEffects:['Diarrhoea (common)','Hepatotoxicity (rare)','Rash'],
-   dosing:[
-     {wt:'Adults',dose:'625 mg',freq:'TID',days:'5–7',notes:'Take with meals to reduce GI side effects.'},
-   ],
-   icd11:'', monitoring:'LFTs if jaundice develops. INR if on warfarin.'},
-
-  {id:'cotrimox', cat:'Antibiotic', stg:'Ch.6.2',
-   name:'Co-trimoxazole 480mg (80/400mg)', brand:'Bactrim/Septrin', route:'Oral',
-   nhis:true, eml:true, stock:320, reorder:500, unit:'tablet',
-   indication:'UTI (uncomplicated), PCP prophylaxis (HIV), toxoplasmosis prophylaxis, typhoid (susceptible)',
-   contraindications:['Sulphonamide allergy','Severe renal impairment','G6PD deficiency (use with caution)','Megaloblastic anaemia'],
-   interactions:['Warfarin — potentiates','Methotrexate — avoid (folate antagonism)','ACE inhibitors — hyperkalaemia risk'],
-   sideEffects:['Rash (including Stevens-Johnson — STOP if rash with fever/blisters)','GI upset','Folate deficiency with prolonged use'],
-   dosing:[
-     {wt:'UTI (adults)',dose:'2 × 480mg',freq:'BD',days:3,notes:'Short course for uncomplicated UTI.'},
-     {wt:'PCP prophylaxis',dose:'1 × 480mg',freq:'OD',days:'Ongoing (HIV)',notes:'Or 960mg three times weekly if intolerant of daily.'},
-     {wt:'Children',dose:'6 mg/kg trimethoprim',freq:'BD',days:5,notes:'Use suspension.'},
-   ],
-   icd11:'', monitoring:'FBC for prolonged use. Renal function if eGFR <30.'},
-
-  {id:'doxy', cat:'Antibiotic', stg:'Ch.6.3',
-   name:'Doxycycline 100mg capsules', brand:'Generic', route:'Oral',
-   nhis:true, eml:true, stock:144, reorder:200, unit:'capsule',
-   indication:'Chlamydia, PID (with metronidazole), malaria prophylaxis, LRTI atypical, leptospirosis',
-   contraindications:['Pregnancy (all trimesters)','Children <8 years','Severe hepatic impairment'],
-   interactions:['Antacids/iron/calcium — reduce absorption (give 2h apart)','OCP — counsel','Warfarin — monitor'],
-   sideEffects:['Photosensitivity (use sunscreen)','Oesophageal ulceration (take with plenty of water, remain upright)','Nausea'],
-   dosing:[
-     {wt:'Adults — infection',dose:'100 mg',freq:'BD',days:'7–14',notes:'Take with food and full glass of water. Remain upright 30 min after.'},
-     {wt:'Malaria prophylaxis',dose:'100 mg',freq:'OD',days:'Start 2d before, continue 4wk after',notes:'Not for children <8y. Not in pregnancy.'},
-   ],
-   icd11:'', monitoring:'None short-term. LFTs prolonged use.'},
-
-  {id:'metronidazole', cat:'Antibiotic/Antiprotozoal', stg:'Ch.6.4',
-   name:'Metronidazole 400mg tablets', brand:'Flagyl', route:'Oral/IV',
-   nhis:true, eml:true, stock:280, reorder:400, unit:'tablet',
-   indication:'Anaerobic infections, BV, trichomonas, giardia, amoebic dysentery, C. difficile, dental infections',
-   contraindications:['First trimester pregnancy (systemic — avoid)','Disulfiram use'],
-   interactions:['Alcohol — ABSOLUTE CONTRAINDICATION (disulfiram reaction)','Warfarin — potentiates significantly','Lithium — monitor levels'],
-   sideEffects:['Metallic taste','Nausea','Peripheral neuropathy (prolonged use)','Disulfiram reaction with alcohol'],
-   dosing:[
-     {wt:'Adults — anaerobic',dose:'400 mg',freq:'TID',days:7,notes:'NO ALCOHOL during and 48h after completion.'},
-     {wt:'BV/Trichomonas',dose:'2 g',freq:'Single dose',days:1,notes:'Or 400 mg BD × 5–7 days. Treat partner simultaneously.'},
-     {wt:'Giardia',dose:'400 mg',freq:'TID',days:5,notes:''},
-     {wt:'IV (severe)',dose:'500 mg IV',freq:'Q8h',days:'Until oral tolerated',notes:''},
-   ],
-   icd11:'', monitoring:'LFTs prolonged use. Peripheral neuro symptoms.'},
-
-  // ── CHRONIC DISEASE — CARDIOVASCULAR (Ch. 7) ─────────────
-  {id:'amlodipine', cat:'Antihypertensive', stg:'Ch.7.1',
-   name:'Amlodipine 5mg / 10mg tablets', brand:'Norvasc/Generic', route:'Oral',
-   nhis:true, eml:true, stock:380, reorder:600, unit:'tablet',
-   indication:'Hypertension (first-line Ghana STG 2023) · Angina pectoris · Variant angina',
-   contraindications:['Cardiogenic shock','Severe aortic stenosis','Unstable angina (start cautiously)'],
-   interactions:['Simvastatin >20mg — avoid (myopathy risk)','CYP3A4 inhibitors (e.g. clarithromycin) — increase levels','Cyclosporin — monitor'],
-   sideEffects:['Peripheral oedema (dose-dependent)','Flushing','Headache','Palpitations'],
-   dosing:[
-     {wt:'Adults — HTN',dose:'5 mg',freq:'OD',days:'Ongoing',notes:'Titrate to 10 mg OD after 4 weeks if BP not controlled. Give at same time daily.'},
-     {wt:'Elderly (>65y)',dose:'2.5–5 mg',freq:'OD',days:'Ongoing',notes:'Start low, titrate slowly. Monitor for ankle oedema.'},
-   ],
-   icd11:'BA00', monitoring:'BP monitoring. eGFR annually. Ankle oedema.'},
-
-  {id:'lisinopril', cat:'Antihypertensive', stg:'Ch.7.1',
-   name:'Lisinopril 5mg / 10mg / 20mg tablets', brand:'Zestril/Generic', route:'Oral',
-   nhis:true, eml:true, stock:220, reorder:400, unit:'tablet',
-   indication:'HTN (especially with diabetes/CKD/heart failure) · Heart failure · Post-MI · Diabetic nephropathy',
-   contraindications:['Pregnancy — absolute (teratogen — stop immediately if pregnancy)','Bilateral renal artery stenosis','Angioedema history (ACEi)','Hyperkalaemia (K+ >5.5)'],
-   interactions:['NSAIDs — reduce efficacy + renal toxicity','Potassium sparing diuretics — hyperkalaemia risk','Lithium — monitor levels'],
-   sideEffects:['Dry cough (10–20% — switch to ARB if intolerable)','Hyperkalaemia','First-dose hypotension','Angioedema (rare but serious — stop immediately)'],
-   dosing:[
-     {wt:'HTN — Adults',dose:'5–10 mg',freq:'OD',days:'Ongoing',notes:'Start 5 mg, titrate to 20–40 mg OD. Check K+/eGFR at baseline, 1wk, 1mo, then Q6mo.'},
-     {wt:'Heart failure',dose:'2.5 mg',freq:'OD',days:'Ongoing',notes:'Start low, titrate up slowly over weeks. Monitor BP and renal.'},
-     {wt:'Post-MI',dose:'5 mg OD started within 24h',freq:'OD',days:'Long term',notes:''},
-   ],
-   icd11:'BA00', monitoring:'eGFR + K+ at 1wk, 1mo, then Q6mo. BP regularly.'},
-
-  {id:'atenolol', cat:'Antihypertensive/Beta-blocker', stg:'Ch.7.1',
-   name:'Atenolol 50mg / 100mg tablets', brand:'Tenormin/Generic', route:'Oral',
-   nhis:true, eml:true, stock:160, reorder:300, unit:'tablet',
-   indication:'HTN · Angina · Rate control (AF) · Post-MI · Heart failure (cautious)',
-   contraindications:['Asthma/COPD (significant bronchospasm)','2nd/3rd degree heart block','Severe bradycardia (<50 bpm)','Cardiogenic shock'],
-   interactions:['Verapamil/Diltiazem — severe bradycardia/block (do not combine IV)','NSAIDs — reduce antihypertensive effect','Clonidine — rebound HTN on withdrawal'],
-   sideEffects:['Bradycardia','Cold extremities','Fatigue','Erectile dysfunction','Masking hypoglycaemia symptoms (DM)'],
-   dosing:[
-     {wt:'HTN',dose:'50 mg',freq:'OD',days:'Ongoing',notes:'Titrate to 100 mg OD. Measure HR before each dose. Do not stop abruptly (rebound angina).'},
-     {wt:'Post-MI',dose:'50–100 mg',freq:'OD',days:'Long term',notes:'Start within 24h of MI if no contraindications.'},
-   ],
-   icd11:'BA00', monitoring:'HR (hold if <50 bpm). BP. Blood glucose in DM.'},
-
-  {id:'furosemide', cat:'Diuretic', stg:'Ch.7.2',
-   name:'Furosemide 40mg tablets / 20mg/2ml IV', brand:'Lasix/Generic', route:'Oral/IV',
-   nhis:true, eml:true, stock:200, reorder:400, unit:'tablet',
-   indication:'Heart failure (oedema) · Pulmonary oedema (IV) · Hypertension · Nephrotic syndrome · Cirrhotic ascites',
-   contraindications:['Anuria','Hypovolaemia','Severe hypokalaemia'],
-   interactions:['ACEi/ARB — hypotension risk','NSAIDs — reduced diuretic effect','Aminoglycosides — ototoxicity risk','Digoxin — hypokalaemia increases toxicity'],
-   sideEffects:['Hypokalaemia (supplement K+ or add spironolactone)','Dehydration','Hyperuricaemia','Hyponatraemia'],
-   dosing:[
-     {wt:'Heart failure',dose:'40 mg',freq:'OD–BD',days:'Ongoing',notes:'Adjust dose by response. Weigh daily. Target: dry weight, no oedema. Always give with potassium supplementation or spironolactone.'},
-     {wt:'Pulmonary oedema (IV)',dose:'40–80 mg IV stat',freq:'Repeat if inadequate response',days:'Until oral tolerated',notes:'Onset: 5–10 min. Monitor urine output. Give IV bolus slowly.'},
-   ],
-   icd11:'CA23', monitoring:'U&E (K+) Q1–2 weeks initially. Urine output. Daily weight in HF.'},
-
-  // ── DIABETES (Ch. 7.4) ───────────────────────────────────
-  {id:'metformin', cat:'Antidiabetic', stg:'Ch.7.4',
-   name:'Metformin 500mg / 1000mg tablets', brand:'Glucophage/Generic', route:'Oral',
-   nhis:true, eml:true, stock:440, reorder:600, unit:'tablet',
-   indication:'Type 2 DM — FIRST LINE (all patients unless contraindicated) · PCOS · Pre-diabetes',
-   contraindications:['eGFR <30 — stop','Contrast dye procedures — hold 48h before and after','Acute illness/dehydration/surgery — hold temporarily','Hepatic failure'],
-   interactions:['IV contrast — lactic acidosis risk (hold 48h around procedure)','Alcohol — lactic acidosis risk'],
-   sideEffects:['Diarrhoea/nausea (very common — take with food, start low)','Lactic acidosis (rare, mainly in renal impairment)','B12 deficiency (long-term — supplement or monitor)'],
-   dosing:[
-     {wt:'T2DM — Adults',dose:'500 mg',freq:'BD with meals',days:'Ongoing',notes:'Increase by 500 mg every 2 weeks to max 2g BD. Starting low reduces GI side effects.'},
-     {wt:'Elderly/CKD stage 3a',dose:'500 mg',freq:'OD–BD',days:'Ongoing',notes:'Check eGFR before starting and Q6mo. Stop if eGFR <30.'},
-   ],
-   icd11:'5A10', monitoring:'eGFR + B12 annually. HbA1c Q3mo initially then Q6mo. Renal function.'},
-
-  {id:'glibenclamide', cat:'Antidiabetic', stg:'Ch.7.4',
-   name:'Glibenclamide 5mg tablets', brand:'Daonil/Generic', route:'Oral',
-   nhis:true, eml:true, stock:180, reorder:300, unit:'tablet',
-   indication:'T2DM (add-on to metformin or monotherapy if intolerant)',
-   contraindications:['T1DM','Severe hepatic/renal impairment','Pregnancy (risk of neonatal hypoglycaemia — use insulin)','G6PD deficiency'],
-   interactions:['Beta-blockers — mask hypoglycaemia signs','Fluconazole — potentiates (hypoglycaemia)','NSAIDs — potentiate','Alcohol — potentiates and adds unpredictability'],
-   sideEffects:['Hypoglycaemia (significant — especially in elderly)','Weight gain','Photosensitivity'],
-   dosing:[
-     {wt:'Adults',dose:'2.5–5 mg',freq:'OD with breakfast',days:'Ongoing',notes:'Start 2.5 mg OD. Titrate up slowly. Max 15 mg/day in 2 divided doses. Caution in elderly — start at 2.5 mg, risk of prolonged hypoglycaemia.'},
-   ],
-   icd11:'5A10', monitoring:'FBG + HbA1c Q3mo. Educate patient on hypoglycaemia signs and management (sugary drink). Renal function.'},
-
-  {id:'insulin_actrapid', cat:'Antidiabetic', stg:'Ch.7.4',
-   name:'Actrapid (Regular) Insulin 100 IU/ml', brand:'Actrapid/Humulin R', route:'SC/IV',
-   nhis:true, eml:true, stock:12, reorder:30, unit:'vial',
-   indication:'T1DM · T2DM (uncontrolled) · DKA · Perioperative diabetes management · Gestational DM',
-   contraindications:['Hypoglycaemia'],
-   interactions:['Beta-blockers — mask tachycardia of hypo (sweating still present)','Corticosteroids — raise glucose','Alcohol — potentiates hypoglycaemia'],
-   sideEffects:['Hypoglycaemia (main risk — educate)','Lipodystrophy at injection sites','Weight gain'],
-   dosing:[
-     {wt:'DKA',dose:'0.1 U/kg/h IV infusion',freq:'Continuous',days:'Until resolved',notes:'Start ONLY after K+ >3.5. Give fluid resuscitation first. Use 50 IU in 50 ml NaCl 0.9%. Switch to SC when eating and BG <12.'},
-     {wt:'SC regimen (T2DM)',dose:'10 units',freq:'OD nocte (starting)',days:'Ongoing',notes:'Titrate by 2 U every 3 days based on FBG. Goal FBG 4–7 mmol/L.'},
-   ],
-   icd11:'5A10', monitoring:'BG Q1–2h (DKA). K+ Q1h (DKA). BG pre-meal and bedtime (SC). HbA1c Q3mo.'},
-
-  // ── MATERNAL HEALTH (Ch. 11) ─────────────────────────────
-  {id:'mgso4', cat:'Anticonvulsant/Maternal', stg:'Ch.11.3',
-   name:'Magnesium Sulphate 50% (2g/4ml ampoule)', brand:'MgSO4', route:'IV/IM',
-   nhis:true, eml:true, stock:28, reorder:60, unit:'ampoule',
-   indication:'Pre-eclampsia with severe features · Eclampsia (seizure prevention and treatment)',
-   contraindications:['Myasthenia gravis','eGFR <20 (use with extreme caution)','Respiratory rate <12/min'],
-   interactions:['Calcium channel blockers — enhanced hypotension','Neuromuscular blocking agents — profound paralysis'],
-   sideEffects:['Flushing','Nausea','Loss of patellar reflexes (early toxicity warning)','Respiratory depression (serious — have calcium gluconate ready)'],
-   dosing:[
-     {wt:'Loading dose',dose:'4 g (8 ml of 50%) in 100 ml NaCl 0.9%',freq:'IV over 15–20 min',days:'Once',notes:'IMMEDIATELY AFTER: Start maintenance dose. Keep 10 ml calcium gluconate 10% at bedside as antidote.'},
-     {wt:'Maintenance',dose:'1 g/h IV',freq:'Continuous infusion',days:'24h post-delivery or last seizure',notes:'OR: 5 g IM (10 ml 50% + 1 ml lidocaine) Q4h into alternating buttocks. IV preferred if available.'},
-   ],
-   icd11:'JA22', monitoring:'Patellar reflexes Q15min (absent = toxicity → reduce dose), RR Q15min (stop if <12), urine output >25ml/h, Mg levels if available (therapeutic 2–4 mmol/L).'},
-
-  {id:'oxytocin', cat:'Uterotonics', stg:'Ch.11.4',
-   name:'Oxytocin 10 IU/ml ampoule', brand:'Syntocinon', route:'IV/IM',
-   nhis:true, eml:true, stock:96, reorder:150, unit:'ampoule',
-   indication:'Active management of 3rd stage labour (PPH prevention) · PPH treatment · Induction/augmentation',
-   contraindications:['Malpresentation (augmentation)','Disproportion (augmentation)','Previous classical uterine scar'],
-   interactions:['Ergometrine — synergistic uterotonic effect (often combined)'],
-   sideEffects:['Uterine hyperstimulation (too rapid IV)','Hypotension (rapid IV bolus)','Water retention (high doses)'],
-   dosing:[
-     {wt:'PPH prevention',dose:'10 IU IM',freq:'Immediately after delivery',days:'Once',notes:'Give within 1 min of delivery. This is the AMTSL standard.'},
-     {wt:'PPH treatment',dose:'20–40 IU in 500 ml',freq:'IV infusion 250 ml/h',days:'As needed',notes:'Plus bimanual compression. Plus tranexamic acid. Plus uterine massage.'},
-     {wt:'Induction',dose:'1–2 mU/min IV, increase by 1–2 mU Q30min',freq:'Continuous',days:'Active labour established',notes:'Cardiotocography monitoring mandatory.'},
-   ],
-   icd11:'', monitoring:'Uterine tone. Fetal CTG (induction). Urine output. BP (IV rapid bolus).'},
-
-  {id:'tranexamic', cat:'Haemostatic/Maternal', stg:'Ch.11.4',
-   name:'Tranexamic Acid 500mg/5ml IV (1g amp)', brand:'Cyklokapron/TXA', route:'IV',
-   nhis:true, eml:true, stock:40, reorder:80, unit:'ampoule',
-   indication:'PPH (Ghana STG 2023 addition — WOMAN trial evidence) · Trauma haemorrhage · Menorrhagia',
-   contraindications:['Active thromboembolic disease','Haematuria (upper urinary tract)'],
-   interactions:['Hormonal contraception — pro-thrombotic (monitor)'],
-   sideEffects:['Nausea/vomiting','Diarrhoea','Thrombosis (rare)'],
-   dosing:[
-     {wt:'PPH',dose:'1 g IV (10 ml of 100mg/ml)',freq:'Give within 3h of delivery over 10 min, repeat 1g at 30 min if bleeding continues',days:'Once or twice',notes:'TIME CRITICAL — efficacy decreases with time from haemorrhage. Must be given within 3 hours of PPH.'},
-   ],
-   icd11:'', monitoring:'Uterine tone after administration. Blood loss estimation. BP and HR.'},
-
-  {id:'ferrous', cat:'Haematinic', stg:'Ch.11.1',
-   name:'Ferrous Sulphate 200mg tablets (65mg elemental iron)', brand:'Generic', route:'Oral',
-   nhis:true, eml:true, stock:640, reorder:800, unit:'tablet',
-   indication:'Iron deficiency anaemia · ANC supplementation (all pregnant women) · Postpartum anaemia',
-   contraindications:['Haemochromatosis','Sideroblastic anaemia','Haemolytic anaemia'],
-   interactions:['Antacids/calcium — reduce absorption (separate by 2h)','Tetracyclines/fluoroquinolones — reduced antibiotic absorption (separate by 2h)','Levothyroxine — separate by 4h'],
-   sideEffects:['Constipation (most common)','Nausea','Black stools (normal — reassure)','Epigastric pain (take with food)'],
-   dosing:[
-     {wt:'ANC supplementation',dose:'200 mg (65 mg elemental)',freq:'OD',days:'Ongoing throughout pregnancy',notes:'Best absorbed on empty stomach but take with food if GI intolerance. Vitamin C enhances absorption.'},
-     {wt:'Iron deficiency anaemia',dose:'200 mg',freq:'BD–TID',days:'Until Hb normal + 3 months to replenish stores',notes:'Recheck Hb at 4 weeks.'},
-   ],
-   icd11:'', monitoring:'Hb at 4 weeks. Ferritin when Hb normal to confirm stores replenished.'},
-
-  // ── TUBERCULOSIS (Ch. 14) ────────────────────────────────
-  {id:'hrze', cat:'Antituberculosis', stg:'Ch.14.1',
-   name:'HRZE Fixed-Dose Combination (Rifampicin/INH/PZA/Ethambutol)', brand:'Rimstar 4FDC', route:'Oral',
-   nhis:true, eml:true, stock:18, reorder:50, unit:'tablet',
-   indication:'Drug-sensitive TB — intensive phase (2 months) · All new TB cases after GeneXpert confirmation',
-   contraindications:['Active hepatic disease (relative)','Optic neuritis (ethambutol — avoid)','Severe renal impairment'],
-   interactions:['Rifampicin — powerful CYP450 inducer: reduces levels of antiretrovirals, OCP, warfarin, corticosteroids, methadone — review ALL medications'],
-   sideEffects:['Orange/red urine from rifampicin (reassure — NORMAL)','Hepatotoxicity (monitor LFTs)','Peripheral neuropathy (INH — give pyridoxine 25mg OD)','Hyperuricaemia (PZA)','Visual disturbance (ethambutol — stop if vision changes)'],
-   dosing:[
-     {wt:'30–37 kg',dose:'2 tablets',freq:'OD',days:'60 doses (2 months)',notes:'DIRECTLY OBSERVED TREATMENT (DOTS). Give with pyridoxine 25mg OD. Take on empty stomach.'},
-     {wt:'38–54 kg',dose:'3 tablets',freq:'OD',days:'60 doses (2 months)',notes:''},
-     {wt:'55–70 kg',dose:'4 tablets',freq:'OD',days:'60 doses (2 months)',notes:''},
-     {wt:'>70 kg',dose:'5 tablets',freq:'OD',days:'60 doses (2 months)',notes:''},
-   ],
-   icd11:'CA22.0', monitoring:'LFTs at baseline and monthly. Visual acuity monthly. Uric acid if symptoms. DOTS adherence daily. GeneXpert at 2 months.'},
-
-  // ── PAEDIATRICS (Ch. 16) ─────────────────────────────────
-  {id:'paracetamol', cat:'Analgesic/Antipyretic', stg:'Ch.16',
-   name:'Paracetamol 500mg tabs / 120mg/5ml syrup', brand:'Panadol/Generic', route:'Oral',
-   nhis:true, eml:true, stock:820, reorder:1000, unit:'tablet',
-   indication:'Pain (mild-moderate) · Fever · Safe in pregnancy · Safe in G6PD deficiency',
-   contraindications:['Severe hepatic impairment','Paracetamol allergy (rare)'],
-   interactions:['Warfarin — high doses increase INR','Alcohol — hepatotoxicity risk (avoid >3 drinks/day)'],
-   sideEffects:['Hepatotoxicity (overdose — key risk)','Rash (rare)'],
-   dosing:[
-     {wt:'Adults',dose:'1 g (2 × 500mg)',freq:'Q4–6h PRN',days:'As needed',notes:'MAX 4g/day (3g if liver disease/alcohol use). Space doses ≥4h apart.'},
-     {wt:'Children 6–12y',dose:'500 mg',freq:'Q4–6h PRN (max 4 doses/24h)',days:'As needed',notes:''},
-     {wt:'Children 1–5y',dose:'240 mg (10 ml syrup)',freq:'Q4–6h PRN',days:'As needed',notes:''},
-     {wt:'Infants 3–12m',dose:'120 mg (5 ml syrup)',freq:'Q4–6h PRN',days:'As needed',notes:''},
-   ],
-   icd11:'', monitoring:'None for short-term standard dosing.'},
-
-  {id:'ors', cat:'ORT/Dehydration', stg:'Ch.16.2',
-   name:'Oral Rehydration Salts (ORS) sachets', brand:'ORS/Dioralyte', route:'Oral',
-   nhis:true, eml:true, stock:480, reorder:600, unit:'sachet',
-   indication:'Acute diarrhoea with dehydration (mild-moderate) · Gastroenteritis · Cholera (alongside IV fluids)',
-   contraindications:['Severe dehydration with shock (needs IV first)','Ileus'],
-   interactions:['None'],
-   sideEffects:['Vomiting (give small frequent sips if vomiting)','Hypernatraemia (rare if prepared incorrectly)'],
-   dosing:[
-     {wt:'Adults',dose:'1 sachet in 200 ml water',freq:'After each loose stool',days:'Until diarrhoea stops',notes:'Adults: 200–400 ml per loose stool. ENCOURAGE small frequent sips.'},
-     {wt:'Children <2y',dose:'50–100 ml per kg over 3–4h',freq:'Ongoing losses after each stool',days:'Until diarrhoea stops',notes:'For mild dehydration. Use spoon or syringe.'},
-   ],
-   icd11:'', monitoring:'Hydration status. Urine output. Weight. Signs of severe dehydration requiring IV.'},
-];
+var PH_DRUGS = [];
 
 // ── Active prescriptions (demo patient) ───────────────────────
-var PH_ACTIVE_RX = [
-  {id:'RX-00441-1',patient:'Akosua Mensah',pid:'PT-00441',drug:'Artemether-Lumefantrine 20/120mg',
-   dose:'4 tablets',freq:'BD',days:3,prescribed:'Today 09:24',prescriber:'Dr. E. Asante',
-   status:'Dispensed',sc:'bg',icd:'1F40',nhis:true,remaining:'Day 1 of 3'},
-  {id:'RX-00382-1',patient:'Kofi Agyemang',pid:'PT-00382',drug:'Amlodipine 10mg',
-   dose:'1 tablet',freq:'OD',days:'Ongoing',prescribed:'28 Apr 14:30',prescriber:'Dr. S. Boateng',
-   status:'Active',sc:'bg',icd:'BA00',nhis:true,remaining:'Ongoing'},
-  {id:'RX-00382-2',patient:'Kofi Agyemang',pid:'PT-00382',drug:'Metformin 500mg',
-   dose:'1 tablet',freq:'BD with meals',days:'Ongoing',prescribed:'28 Apr 14:30',prescriber:'Dr. S. Boateng',
-   status:'Active',sc:'bg',icd:'5A10',nhis:true,remaining:'Ongoing'},
-  {id:'RX-00382-3',patient:'Kofi Agyemang',pid:'PT-00382',drug:'Lisinopril 10mg',
-   dose:'1 tablet',freq:'OD',days:'Ongoing',prescribed:'28 Apr 14:30',prescriber:'Dr. S. Boateng',
-   status:'Active',sc:'bg',icd:'BA00',nhis:true,remaining:'Ongoing'},
-  {id:'RX-00290-1',patient:'Abena Owusu',pid:'PT-00290',drug:'Ferrous Sulphate 200mg',
-   dose:'1 tablet',freq:'OD',days:'Throughout pregnancy',prescribed:'15 Apr 10:00',prescriber:'Midwife A. Quaye',
-   status:'Active',sc:'bg',icd:'JA65Z',nhis:true,remaining:'ANC ongoing'},
-  {id:'RX-00290-2',patient:'Abena Owusu',pid:'PT-00290',drug:'Folic Acid 5mg',
-   dose:'1 tablet',freq:'OD',days:'Throughout pregnancy',prescribed:'15 Apr 10:00',prescriber:'Midwife A. Quaye',
-   status:'Active',sc:'bg',icd:'JA65Z',nhis:true,remaining:'ANC ongoing'},
-  {id:'RX-00511-1',patient:'Kwame Darko',pid:'PT-00511',drug:'Artesunate IV 60mg/vial',
-   dose:'2.4 mg/kg IV',freq:'Q12h then OD',days:7,prescribed:'28 Apr 16:45',prescriber:'Dr. P. Alhassan',
-   status:'Active — PICU',sc:'br',icd:'1F40.1',nhis:true,remaining:'Day 2 of 7'},
-  {id:'RX-00199-1',patient:'Ama Boateng',pid:'PT-00199',drug:'Furosemide 40mg',
-   dose:'1 tablet',freq:'OD morning',days:'Ongoing',prescribed:'26 Apr 11:00',prescriber:'Dr. R. Mensah-Bonsu',
-   status:'Active',sc:'bg',icd:'CA23',nhis:true,remaining:'Ongoing'},
-];
+var PH_ACTIVE_RX = [];
 
-var PH_DISPENSING_QUEUE = [
-  {id:'RX-00841-1',patient:'Emmanuel Boadu',pid:'PT-00841',drug:'Amoxicillin 500mg',dose:'2 capsules',freq:'TID',days:7,urgency:'Routine',status:'Ready'},
-  {id:'RX-00511-2',patient:'Kwame Darko',pid:'PT-00511',drug:'Dextrose 10% infusion',dose:'500 ml',freq:'Continuous',days:1,urgency:'CRITICAL',status:'Urgent'},
-  {id:'RX-00903-1',patient:'Grace Asante',pid:'PT-00903',drug:'Co-Amoxiclav 625mg',dose:'1 tablet',freq:'TID',days:5,urgency:'Routine',status:'Ready'},
-  {id:'RX-00712-1',patient:'Yaw Mensah',pid:'PT-00712',drug:'Metronidazole 400mg',dose:'1 tablet',freq:'TID',days:7,urgency:'Routine',status:'Ready'},
-];
+var PH_DISPENSING_QUEUE = [];
 
 // ── Rebuild buildPharmacy ──────────────────────────────────────
 function buildPharmacy() {
@@ -6079,76 +5398,7 @@ function liveTick() {
 // ============================================================
 
 // -- Device and patient data -----------------------------------
-var IOMT_DEVICES = [
-  {
-    id:'DEV-0441', ptId:'PT-00441', ptName:'Akosua Mensah', age:34, sex:'F',
-    region:'Greater Accra', facility:'Ridge Regional Hospital', ward:'OPD - Bay 3',
-    deviceType:'Vital Signs Monitor', model:'CardioAI VSM-200', status:'active',
-    battery:87, signal:4, lastSync:'2s ago',
-    vitals:{ hr:102, bp:'118/76', spo2:97, temp:38.9, rr:20, glucose:null },
-    trend:{ hr:[98,100,102,101,103,102,102], spo2:[97,97,98,97,96,97,97] },
-    alerts:[{sev:'warn',msg:'HR mildly elevated - malaria-related tachycardia',time:'09:24'}],
-    agentScore:6.2, nhis:'GH-NHIS-2291874', ghanaCard:'GHA-190234-7'
-  },
-  {
-    id:'DEV-0382', ptId:'PT-00382', ptName:'Kofi Agyemang', age:58, sex:'M',
-    region:'Ashanti', facility:'Komfo Anokye Teaching Hospital', ward:'Chronic Disease Clinic',
-    deviceType:'Multi-Parameter Monitor', model:'CardioAI MPM-500', status:'active',
-    battery:62, signal:3, lastSync:'8s ago',
-    vitals:{ hr:78, bp:'158/96', spo2:98, temp:36.8, rr:16, glucose:9.8 },
-    trend:{ hr:[76,78,77,79,78,78,78], spo2:[98,98,98,99,98,98,98], bp_sys:[162,160,159,158,159,158,158] },
-    alerts:[
-      {sev:'critical',msg:'BP 158/96 - above target - HTN Grade 2 uncontrolled',time:'14:30'},
-      {sev:'warn',msg:'Glucose 9.8 mmol/L - above diabetic target of 7.8',time:'14:28'}
-    ],
-    agentScore:8.1, nhis:'GH-NHIS-1184562', ghanaCard:'GHA-204811-3'
-  },
-  {
-    id:'DEV-0290', ptId:'PT-00290', ptName:'Abena Owusu', age:26, sex:'F',
-    region:'Western', facility:'Effia-Nkwanta Regional Hospital', ward:'Antenatal Ward',
-    deviceType:'Maternal-Foetal Monitor', model:'CardioAI MFM-300', status:'active',
-    battery:91, signal:4, lastSync:'5s ago',
-    vitals:{ hr:84, bp:'110/70', spo2:99, temp:36.6, rr:18, fetalHR:144 },
-    trend:{ hr:[82,83,84,84,85,84,84], spo2:[99,99,99,100,99,99,99], fetalHR:[142,143,144,144,145,144,144] },
-    alerts:[],
-    agentScore:2.1, nhis:'GH-NHIS-3301029', ghanaCard:'GHA-308820-5'
-  },
-  {
-    id:'DEV-0511', ptId:'PT-00511', ptName:'Kwame Darko', age:7, sex:'M',
-    region:'Northern', facility:'Tamale Teaching Hospital', ward:'Paediatric Ward - Bed 7',
-    deviceType:'Paediatric ICU Monitor', model:'CardioAI PICU-100', status:'critical',
-    battery:95, signal:4, lastSync:'1s ago',
-    vitals:{ hr:130, bp:'90/60', spo2:94, temp:39.2, rr:28, gcs:13 },
-    trend:{ hr:[128,130,132,131,130,129,130], spo2:[94,93,94,95,94,94,94], gcs:[13,13,13,14,13,13,13] },
-    alerts:[
-      {sev:'critical',msg:'HR 130 - tachycardia - severe malaria',time:'16:45'},
-      {sev:'critical',msg:'SpO2 94% - low - O2 therapy required',time:'16:43'},
-      {sev:'critical',msg:'GCS 13/15 - impaired consciousness - cerebral malaria',time:'16:41'},
-      {sev:'warn',msg:'Temp 39.2 - high fever - anti-pyretic given',time:'16:40'}
-    ],
-    agentScore:9.4, nhis:'GH-NHIS-4418873', ghanaCard:'GHA-420044-1'
-  },
-  {
-    id:'DEV-0199', ptId:'PT-00199', ptName:'Ama Boateng', age:45, sex:'F',
-    region:'Central', facility:'Cape Coast Teaching Hospital', ward:'Gynaecology Clinic',
-    deviceType:'Vital Signs Monitor', model:'CardioAI VSM-200', status:'active',
-    battery:74, signal:3, lastSync:'12s ago',
-    vitals:{ hr:72, bp:'128/82', spo2:99, temp:36.5, rr:16, glucose:null },
-    trend:{ hr:[70,72,71,73,72,72,72], spo2:[99,99,99,99,100,99,99] },
-    alerts:[],
-    agentScore:3.4, nhis:'GH-NHIS-5527614', ghanaCard:'GHA-512340-9'
-  },
-  {
-    id:'DEV-CHPS-01', ptId:'CHPS-ZONE-7', ptName:'CHPS Compound - Nyohini', age:null, sex:null,
-    region:'Northern', facility:'Nyohini CHPS Compound', ward:'Community',
-    deviceType:'Community IoMT Hub', model:'CardioAI CHPS-Hub v2', status:'active',
-    battery:68, signal:2, lastSync:'45s ago',
-    vitals:{ patientsMonitored:24, alertsToday:3, syncRate:94, offlineMinutes:2 },
-    trend:{ patientsMonitored:[20,22,23,24,24,24,24] },
-    alerts:[{sev:'warn',msg:'Solar battery at 68% - cloudy weather forecast',time:'Today'}],
-    agentScore:null, nhis:null, ghanaCard:null, isCommunity:true
-  }
-];
+var IOMT_DEVICES = [];
 
 var IOMT_AGENTS = [
   {num:1, icon:'A1', name:'Data Acquisition Agent', color:'var(--jade)',
@@ -6487,6 +5737,11 @@ function renderIoMTDevices(c) {
   });
 
   var dev = IOMT_DEVICES.find(function(d){ return d.id===iomt_sel_device; }) || IOMT_DEVICES[0];
+  if(!dev){
+    c.appendChild(el('div', {style:{color:'var(--muted)',fontSize:'12px',padding:'2.5rem 1rem',textAlign:'center',lineHeight:'1.6'}},
+      'No connected devices. Registered IoMT devices will appear here once provisioned.'));
+    return;
+  }
   iomt_sel_device = dev.id;
 
   // Device info banner
@@ -6799,7 +6054,7 @@ function renderIoMTAlerts(c) {
   var warnCount = allAlerts.filter(function(a){return a.sev==='warn';}).length;
   kg.appendChild(kpiCard('red','Critical Alerts',String(critCount),'Immediate escalation','PICU + on-call notified','dn'));
   kg.appendChild(kpiCard('amber','Warning Alerts',String(warnCount),'Clinician review needed','SMS via MTN MoMo sent','nt'));
-  kg.appendChild(kpiCard('sky','SMS Notifications','18','Sent via MTN MoMo + Vodafone','Twi and English','up'));
+  kg.appendChild(kpiCard('sky','SMS Notifications','0','Sent via MTN MoMo + Vodafone','Twi and English','up'));
   kg.appendChild(kpiCard('jade','FHIR Audit Events',String(allAlerts.length*3),'Logged to FHIR AuditEvent','Data Protection Act 2012','nt'));
   c.appendChild(kg);
 
@@ -6830,7 +6085,7 @@ function renderIoMTAlerts(c) {
 // -- ANALYTICS -------------------------------------------------
 function renderIoMTAnalytics(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Total Frames','1,965+','Since session start','jade','up'],['Agents Passing','200','100% pass rate - 0 failures','green','up'],['Avg Latency','248ms','IoMT -> FHIR pipeline','sky','nt'],['Test Suites','20','6.76s runtime','amber','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
+  [['Total Frames','0','Since session start','jade','nt'],['Agents Passing','0','—','green','nt'],['Avg Latency','—','IoMT -> FHIR pipeline','sky','nt'],['Test Suites','20','6.76s runtime','amber','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
   c.appendChild(kg);
 
   var g2 = el('div',{cls:'g2',style:{marginBottom:'1.25rem'}});
@@ -8249,7 +7504,7 @@ function initIoMTCharts() {
   }
   var alc = document.getElementById('iomt-alert-chart');
   if (alc && !iomt_charts['alerts']) {
-    iomt_charts['alerts'] = new Chart(alc.getContext('2d'), {type:'doughnut',data:{labels:['Critical','Warning','Normal'],datasets:[{data:[2,3,1],backgroundColor:['#f87171','#fbbf24','#4ade80'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:8,font:{size:10}}}}}});
+    iomt_charts['alerts'] = new Chart(alc.getContext('2d'), {type:'doughnut',data:{labels:['Critical','Warning','Normal'],datasets:[{data:[0,0,0],backgroundColor:['#f87171','#fbbf24','#4ade80'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:8,font:{size:10}}}}}});
   }
   var sc3 = document.getElementById('iomt-spo2-chart');
   if (sc3 && !iomt_charts['spo2']) {
@@ -8303,15 +7558,7 @@ document.addEventListener('DOMContentLoaded', function() {
 var mcrm_tab = 'dashboard';
 var mcrm_pipe_col = null;
 
-var MCRM_PATIENTS = [
-  {id:'PT-00441',name:'Akosua Mensah',dept:'General Medicine',provider:'Dr. E. Asante',lastVisit:'Today 09:24',visitType:'OPD',status:'Active',stcls:'bg',dob:'12 Mar 1991',age:34,fhir:true,dx:'P.falciparum Malaria',region:'Greater Accra',nhis:'GH-NHIS-2291874',phone:'+233 24 456 7890',risk:'moderate'},
-  {id:'PT-00382',name:'Kofi Agyemang',dept:'Chronic Disease Clinic',provider:'Dr. S. Boateng',lastVisit:'Yesterday 14:30',visitType:'Chronic Clinic',status:'Active',stcls:'bg',dob:'07 Nov 1966',age:58,fhir:true,dx:'HTN + T2DM + CKD Stage 2',region:'Ashanti',nhis:'GH-NHIS-1184562',phone:'+233 24 781 2340',risk:'high'},
-  {id:'PT-00290',name:'Abena Owusu',dept:'Maternal Health',provider:'Midwife A. Quaye',lastVisit:'29 Apr 10:15',visitType:'ANC',status:'Active',stcls:'bg',dob:'22 Aug 1998',age:26,fhir:true,dx:'ANC 28 weeks - uncomplicated',region:'Western',nhis:'GH-NHIS-3301029',phone:'+233 27 334 5612',risk:'low'},
-  {id:'PT-00511',name:'Kwame Darko',dept:'Paediatrics',provider:'Dr. P. Alhassan',lastVisit:'28 Apr 16:45',visitType:'Inpatient',status:'At Risk',stcls:'br',dob:'15 Jun 2018',age:7,fhir:true,dx:'Severe P.falciparum Malaria - cerebral',region:'Northern',nhis:'GH-NHIS-4418873',phone:'+233 20 889 1234',risk:'critical'},
-  {id:'PT-00199',name:'Ama Boateng',dept:'Gynaecology',provider:'Dr. R. Mensah-Bonsu',lastVisit:'26 Apr 11:00',visitType:'OPD',status:'Follow-up',stcls:'bp',dob:'03 Feb 1980',age:45,fhir:true,dx:'VIA positive cervical lesion - biopsy pending',region:'Central',nhis:'GH-NHIS-5527614',phone:'+233 24 290 4401',risk:'high'},
-  {id:'PT-00603',name:'Yaw Asante',dept:'Emergency',provider:'Dr. K. Owusu',lastVisit:'Today 08:10',visitType:'Emergency',status:'At Risk',stcls:'br',dob:'14 Apr 1980',age:45,fhir:false,dx:'Chest pain - cardiac rule-out',region:'Greater Accra',nhis:'GH-NHIS-6614221',phone:'+233 24 112 3348',risk:'critical'},
-  {id:'PT-00744',name:'Efua Asare',dept:'Chronic Disease',provider:'Dr. S. Boateng',lastVisit:'22 Apr 14:00',visitType:'Chronic Clinic',status:'Inactive',stcls:'by',dob:'09 Dec 1960',age:64,fhir:false,dx:'Hypertension - overdue review',region:'Ashanti',nhis:'GH-NHIS-7723019',phone:'+233 24 556 9901',risk:'moderate'}
-];
+var MCRM_PATIENTS = [];
 
 var MCRM_AGENTS = [
   {name:'Clinical Triage Agent',desc:'Monitors incoming vitals and NHIS data, flags at-risk patients, prioritises cases by severity score, and routes urgent escalations to on-call clinicians.',icon:'T',color:'var(--red)',flagged:38,action:'Running',log:'Flagged Kwame Darko PT-00511 - Severe malaria GCS 13 - severity score 9.2/10 - escalated to Dr. Alhassan PICU'},
@@ -8349,32 +7596,9 @@ var MCRM_PIPELINE = {
   ]
 };
 
-var MCRM_AGENT_LOG = [
-  {time:'09:51:04',agent:'TRIAGE',msg:'Flagged Kwame Darko PT-00511 - severe malaria GCS 13 + hypoglycaemia - severity 9.2/10 - escalated to PICU Dr. Alhassan'},
-  {time:'09:50:38',agent:'LAB',msg:'GeneXpert HL7 ORU received - PT-00289 - MTB DETECTED RIF SENSITIVE - NTCP register updated - DOTS referral created'},
-  {time:'09:49:12',agent:'NHIS AUTH',msg:'Submitted PA request for Kofi Agyemang - Empagliflozin 10mg - NHIA ref #NHIA-20260430-4421'},
-  {time:'09:47:55',agent:'BILLING',msg:'Auto-coded Akosua Mensah encounter - ICD-11: 1F40 - NHIS claim CLM-24-08412 submitted - GHC 48.00'},
-  {time:'09:45:20',agent:'FOLLOW-UP',msg:'Sent 12 ANC SMS reminders via MTN MoMo network - 9 confirmed - 2 pending signal - 1 opt-out'},
-  {time:'09:42:11',agent:'FHIR',msg:'FHIR R4 sync complete - GHIMS endpoint - 142,807 Patient - 1,340 Observation - 88 Condition resources updated'},
-  {time:'09:40:08',agent:'TRIAGE',msg:'Reviewed 34 new vitals from 13 pilot facilities - 2 alerts: Kwame Darko GCS 13, Yaw Asante BP 178/110'},
-  {time:'09:38:44',agent:'SCHEDULER',msg:'Predictive model: 3 no-shows likely Fri 02 May - Ridge OPD - suggest overbooking 1 slot afternoon'},
-  {time:'09:35:02',agent:'LAB',msg:'PACS DICOM study received - Cranial USS Kwame Darko - linked to FHIR DiagnosticReport DR-20260428-0041'},
-  {time:'09:30:00',agent:'SYSTEM',msg:'All 8 agents initialised - FHIR R4, HL7, GeneXpert, NHIA endpoints verified - system healthy'}
-];
+var MCRM_AGENT_LOG = [];
 
-var MCRM_COMMS = [
-  {from:'Kofi Agyemang',id:'PT-00382',msg:'My blood pressure readings at home have been very high this week doctor.',time:'09:41',unread:true,urgency:'high'},
-  {from:'Abena Owusu',id:'PT-00290',msg:'Can I reschedule my ANC appointment? I have transport issues.',time:'08:22',unread:true,urgency:'low'},
-  {from:'NHIA Claims',id:'SYSTEM',msg:'3 NHIS claims rejected - ghost patient flags - immediate review required.',time:'07:55',unread:true,urgency:'critical'},
-  {from:'Akosua Mensah',id:'PT-00441',msg:'Thank you Doctor. The malaria tablets are working well.',time:'Yesterday',unread:false,urgency:'low'},
-  {from:'Ama Boateng',id:'PT-00199',msg:'Intake forms submitted and signed. Ready for appointment.',time:'Yesterday',unread:false,urgency:'low'},
-  {label:'DHIS2', items:[
-    {id:'dhis2', ico:'[D]', label:'Dashboard'},
-    {id:'dhis2', ico:'[R]', label:'Data Entry & Reporting'},
-    {id:'dhis2', ico:'[S]', label:'Disease Surveillance'},
-    {id:'dhis2', ico:'[F]', label:'FHIR R4 Bridge'}
-  ]}
-];
+var MCRM_COMMS = [];
 
 function buildMedCRM() {
   var pane = el('div', {cls:'pane', attr:{id:'pn-medcrm'}});
@@ -8437,10 +7661,10 @@ function setMCRMTab(id) {
 function renderMCDashboard(c) {
   // KPI row
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Active Patients','142,807','4.2% vs last month','jade','up'],
-   ['Telehealth Today','24','3 live now','sky','up'],
-   ['AI Tasks Today','184','8 agents active','amber','up'],
-   ['NHIS Syncs Today','1,340','All systems live','green','up']
+  [['Active Patients','0','—','jade','nt'],
+   ['Telehealth Today','0','—','sky','nt'],
+   ['AI Tasks Today','0','8 agents active','amber','nt'],
+   ['NHIS Syncs Today','0','—','green','nt']
   ].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
@@ -8525,9 +7749,9 @@ function renderMCDashboard(c) {
   // Init charts after DOM ready
   setTimeout(function(){
     var vc2 = document.getElementById('mc-visits-chart');
-    if(vc2) new Chart(vc2.getContext('2d'),{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'In-person',data:[164,188,172,195,183,98,82],backgroundColor:'rgba(13,148,136,.6)',borderRadius:3},{label:'Telehealth',data:[68,74,71,88,79,32,28],backgroundColor:'rgba(14,165,233,.5)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}},stacked:true},x:{stacked:true}}}});
+    if(vc2) new Chart(vc2.getContext('2d'),{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'In-person',data:[0,0,0,0,0,0,0],backgroundColor:'rgba(13,148,136,.6)',borderRadius:3},{label:'Telehealth',data:[0,0,0,0,0,0,0],backgroundColor:'rgba(14,165,233,.5)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}},stacked:true},x:{stacked:true}}}});
     var dc2 = document.getElementById('mc-diag-chart');
-    if(dc2) new Chart(dc2.getContext('2d'),{type:'doughnut',data:{labels:['Malaria','Maternal/Repro','Chronic NCD','TB/HIV','Emergency','Other'],datasets:[{data:[31,18,22,8,11,10],backgroundColor:['#fb923c','#f472b6','#60a5fa','#4ade80','#f87171','#a78bfa'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:8,font:{size:10}}}}}});
+    if(dc2) new Chart(dc2.getContext('2d'),{type:'doughnut',data:{labels:['Malaria','Maternal/Repro','Chronic NCD','TB/HIV','Emergency','Other'],datasets:[{data:[0,0,0,0,0,0],backgroundColor:['#fb923c','#f472b6','#60a5fa','#4ade80','#f87171','#a78bfa'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:8,font:{size:10}}}}}});
   },150);
 }
 
@@ -8589,7 +7813,7 @@ function renderMCPatients(c) {
   card.appendChild(tbl);
   c.appendChild(card);
   var pg = el('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'.75rem',fontSize:'12px',color:'var(--muted)'}});
-  pg.appendChild(txt('Showing 1-7 of 142,807 patients'));
+  pg.appendChild(txt('Showing ' + (typeof MCRM_PATIENTS!=='undefined'?MCRM_PATIENTS.length:0) + ' patients'));
   var pbtns = el('div',{style:{display:'flex',gap:'.4rem'}});
   pbtns.appendChild(btn('Prev','btn-o btn-sm',function(){}));
   pbtns.appendChild(btn('1','btn-j btn-sm',function(){}));
@@ -8937,7 +8161,7 @@ function renderMCAdmin(c) {
 // -- FHIR / HL7 / PACS -----------------------------------------
 function renderMCFHIR(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['FHIR R4 Resources','1,340','Last sync: 2 min ago','jade','up'],['HL7 Messages','284','ADT ORU ORM active','sky','up'],['PACS Studies','47','Orthanc DICOM connected','purple','up'],['NHIA Claims Synced','1,204','All systems live','green','up']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['FHIR R4 Resources','0','—','jade','nt'],['HL7 Messages','0','ADT ORU ORM','sky','nt'],['PACS Studies','0','Orthanc DICOM','purple','nt'],['NHIA Claims Synced','0','—','green','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
   var g2 = el('div',{cls:'g2',style:{marginBottom:'1.25rem'}});
   // FHIR endpoint
@@ -9021,7 +8245,7 @@ function renderMCFHIR(c) {
 // -- REPORTING ---------------------------------------------------
 function renderMCReporting(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Reports Generated','12','Today','jade','up'],['Scheduled Reports','28','Next: 17:00','sky','nt'],['AI Insights','7','3 new today','amber','up'],['Data Sources','9','All connected','green','up']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['Reports Generated','0','Today','jade','nt'],['Scheduled Reports','0','—','sky','nt'],['AI Insights','0','—','amber','nt'],['Data Sources','9','All connected','green','up']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
   var g2 = el('div',{cls:'g2'});
   // AI insights
@@ -9133,24 +8357,7 @@ var ICD11_CODES = [
   {code:'1B57',   desc:'Typhoid fever',                              cat:'Infectious',  tariff:55,   freq:'Medium'},
 ];
 
-var NHIS_CLAIMS = [
-  {id:'CLM-2026-08412',patient:'Akosua Mensah Boateng',pid:'PT-00142',icd:'1F40',icdDesc:'Uncomplicated P. falciparum malaria',
-   amount:48.00,status:'Approved',nhia:'NHIA-20260430-4421',days:2,confidence:98,submitted:'2026-04-30',facility:'Korle Bu OPD'},
-  {id:'CLM-2026-08413',patient:'Kwame Darko Asante',pid:'PT-00511',icd:'1F40.1',icdDesc:'Severe malaria (cerebral)',
-   amount:320.00,status:'Pending Review',nhia:'',days:1,confidence:94,submitted:'2026-05-01',facility:'Korle Bu PICU'},
-  {id:'CLM-2026-08414',patient:'Ama Kyerewaa Ofori',pid:'PT-00289',icd:'CA22.0',icdDesc:'Pulmonary TB smear-positive',
-   amount:95.00,status:'Submitted',nhia:'NHIA-20260501-4422',days:1,confidence:99,submitted:'2026-05-01',facility:'Korle Bu Chest'},
-  {id:'CLM-2026-08415',patient:'Kofi Agyemang Prempeh',pid:'PT-00382',icd:'5A10',icdDesc:'Type 2 diabetes mellitus',
-   amount:28.00,status:'Rejected',nhia:'R012',days:3,confidence:96,submitted:'2026-04-29',facility:'Ridge OPD'},
-  {id:'CLM-2026-08416',patient:'Abena Asante Osei',pid:'PT-00199',icd:'BA00',icdDesc:'Essential hypertension',
-   amount:28.00,status:'Approved',nhia:'NHIA-20260428-4388',days:1,confidence:97,submitted:'2026-04-28',facility:'Korle Bu OPD'},
-  {id:'CLM-2026-08417',patient:'Yaw Mensah Afriyie',pid:'PT-00774',icd:'JA84',icdDesc:'Postpartum haemorrhage',
-   amount:220.00,status:'Submitted',nhia:'NHIA-20260502-4423',days:1,confidence:92,submitted:'2026-05-02',facility:'Korle Bu Maternity'},
-  {id:'CLM-2026-08418',patient:'Adjoa Owusu Acheampong',pid:'PT-00612',icd:'CA23',icdDesc:'Heart failure',
-   amount:140.00,status:'Pending Review',nhia:'',days:2,confidence:88,submitted:'2026-05-02',facility:'Korle Bu Cardiology'},
-  {id:'CLM-2026-08419',patient:'Kojo Boateng Amponsah',pid:'PT-00441',icd:'3A51',icdDesc:'Sickle cell disease',
-   amount:65.00,status:'Approved',nhia:'NHIA-20260429-4402',days:2,confidence:99,submitted:'2026-04-29',facility:'Korle Bu Haematology'},
-];
+var NHIS_CLAIMS = [];
 
 var RCODES = {
   'R001':'Patient NHIS number not found in NHIA database. Re-verify Ghana Card biometric or update NHIS record.',
@@ -10676,18 +9883,18 @@ var DHIS2_REGIONS = [
 ];
 
 var DHIS2_INDICATORS = [
-  {name:'Malaria Test Positivity Rate',    value:'42.6%', target:'<30%',  status:'br', trend:'up',   period:'Apr 2026', source:'GeneXpert/RDT'},
-  {name:'ANC 4+ Visits Coverage',          value:'68.4%', target:'>80%',  status:'by', trend:'up',   period:'Apr 2026', source:'HMIS'},
-  {name:'Penta 3 Immunisation Coverage',   value:'95.6%', target:'>90%',  status:'bg', trend:'up',   period:'Apr 2026', source:'EPI'},
-  {name:'Skilled Birth Attendance',        value:'83.2%', target:'>85%',  status:'by', trend:'up',   period:'Apr 2026', source:'HMIS'},
-  {name:'TB Case Detection Rate',          value:'61.4%', target:'>70%',  status:'by', trend:'dn',   period:'Apr 2026', source:'NTCP'},
-  {name:'HIV Testing Coverage (15-49y)',   value:'71.8%', target:'>80%',  status:'by', trend:'up',   period:'Apr 2026', source:'NACP'},
-  {name:'OPD Malaria Proportion',          value:'31.2%', target:'<25%',  status:'br', trend:'up',   period:'Apr 2026', source:'OPD Registers'},
-  {name:'DHIS2 Reporting Rate',            value:'91.4%', target:'>95%',  status:'by', trend:'up',   period:'Apr 2026', source:'DHIS2'},
+  {name:'Malaria Test Positivity Rate',    value:'—', target:'<30%',  status:'br', trend:'up',   period:'Apr 2026', source:'GeneXpert/RDT'},
+  {name:'ANC 4+ Visits Coverage',          value:'—', target:'>80%',  status:'by', trend:'up',   period:'Apr 2026', source:'HMIS'},
+  {name:'Penta 3 Immunisation Coverage',   value:'—', target:'>90%',  status:'bg', trend:'up',   period:'Apr 2026', source:'EPI'},
+  {name:'Skilled Birth Attendance',        value:'—', target:'>85%',  status:'by', trend:'up',   period:'Apr 2026', source:'HMIS'},
+  {name:'TB Case Detection Rate',          value:'—', target:'>70%',  status:'by', trend:'dn',   period:'Apr 2026', source:'NTCP'},
+  {name:'HIV Testing Coverage (15-49y)',   value:'—', target:'>80%',  status:'by', trend:'up',   period:'Apr 2026', source:'NACP'},
+  {name:'OPD Malaria Proportion',          value:'—', target:'<25%',  status:'br', trend:'up',   period:'Apr 2026', source:'OPD Registers'},
+  {name:'DHIS2 Reporting Rate',            value:'—', target:'>95%',  status:'by', trend:'up',   period:'Apr 2026', source:'DHIS2'},
   {name:'Under-5 Mortality Rate',          value:'46/1k', target:'<25/1k',status:'br', trend:'dn',   period:'2025',     source:'CRVS'},
   {name:'Maternal Mortality Ratio',        value:'310/100k',target:'<70/100k',status:'br',trend:'dn',period:'2024',    source:'CRVS'},
-  {name:'Modern Contraceptive Prevalence', value:'28.4%', target:'>35%',  status:'by', trend:'up',   period:'Apr 2026', source:'HMIS'},
-  {name:'PLHIV on ART',                    value:'86.3%', target:'>95%',  status:'by', trend:'up',   period:'Apr 2026', source:'NACP'},
+  {name:'Modern Contraceptive Prevalence', value:'—', target:'>35%',  status:'by', trend:'up',   period:'Apr 2026', source:'HMIS'},
+  {name:'PLHIV on ART',                    value:'—', target:'>95%',  status:'by', trend:'up',   period:'Apr 2026', source:'NACP'},
 ];
 
 var DHIS2_FORMS = [
@@ -10701,12 +9908,7 @@ var DHIS2_FORMS = [
   {code:'CHPS_WEEKLY',  name:'CHPS Community Register',      period:'Weekly',   status:'Submitted',    overdue:0,  module:'Community'},
 ];
 
-var DHIS2_ALERTS = [
-  {type:'EWARN',   level:'br', title:'Malaria Outbreak Threshold — Northern Region',       body:'32 cases in Upper West district exceed 2 SD above baseline (28 Apr). Automated alert transmitted to GHS, WHO, and UNICEF.',         time:'09:41'},
-  {type:'QUALITY', level:'by', title:'Low Reporting Rate — Savannah Region (84%)',          body:'15 facilities not submitted IDSR weekly report. Target: >95%. Action: District health information officer notified.',              time:'09:30'},
-  {type:'SYSTEM',  level:'bg', title:'FHIR R4 Sync Complete — 1,340 Observations',          body:'Cardio AI FHIR bridge synced 1,340 Observation resources to DHIS2 aggregate data store. All 16 regions updated.',                 time:'09:24'},
-  {type:'DHIS2',   level:'bb', title:'DHIS2 v40.6 Upgrade Successful',                      body:'Ghana DHIS2 instance upgraded to v40.6. New: enhanced FHIR R4 tracker, improved WHO EWARN integration, Cardio AI API connector.', time:'Yesterday'},
-];
+var DHIS2_ALERTS = [];
 
 // ── Render router ─────────────────────────────────────────────
 function dhis2Render(tab, c) {
@@ -10901,7 +10103,7 @@ function openDHIS2Form(f) {
 // ── ANALYTICS ─────────────────────────────────────────────────
 function dhis2Analytics(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['OPD Malaria %','31.2%','Target <25% — above','red','up'],['ANC 4+ National','68.4%','Target >80% — improving','amber','up'],['Penta 3 Coverage','95.6%','Target >90% — achieved','green','up'],['Reporting Rate','91.4%','Target >95% — improving','amber','up']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
+  [['OPD Malaria %','0%','Target <25%','red','nt'],['ANC 4+ National','0%','Target >80%','amber','nt'],['Penta 3 Coverage','0%','Target >90%','green','nt'],['Reporting Rate','0%','Target >95%','amber','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
   c.appendChild(kg);
 
   // Charts section
@@ -10941,7 +10143,7 @@ function dhis2Analytics(c) {
   setTimeout(function(){
     // Malaria trend
     var mc = document.getElementById('dhis2-malaria-chart');
-    if(mc && window.Chart) new Chart(mc.getContext('2d'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[{label:'Malaria Cases (000s)',data:[18.4,22.1,31.2,38.7,42.1,35.4,28.2,19.8,14.2,16.8,19.4,23.1],borderColor:'#f87171',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:.4,pointRadius:3,borderWidth:2},{label:'Threshold',data:[25,25,25,25,25,25,25,25,25,25,25,25],borderColor:'rgba(245,158,11,.5)',borderDash:[4,3],pointRadius:0,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}}}}});
+    if(mc && window.Chart) new Chart(mc.getContext('2d'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'],datasets:[{label:'Malaria Cases (000s)',data:[0,0,0,0,0,0,0,0,0,0,0,0],borderColor:'#f87171',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:.4,pointRadius:3,borderWidth:2},{label:'Threshold',data:[0,0,0,0,0,0,0,0,0,0,0,0],borderColor:'rgba(245,158,11,.5)',borderDash:[4,3],pointRadius:0,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}}}}});
 
     // ANC by region
     var ac = document.getElementById('dhis2-anc-chart');
@@ -10949,11 +10151,11 @@ function dhis2Analytics(c) {
 
     // Disease burden
     var dc = document.getElementById('dhis2-disease-chart');
-    if(dc && window.Chart) new Chart(dc.getContext('2d'),{type:'doughnut',data:{labels:['Malaria (31.2%)','Maternal/Repro (14.8%)','Respiratory (12.4%)','Chronic NCD (18.2%)','TB/HIV (6.8%)','Injuries (7.4%)','Other (9.2%)'],datasets:[{data:[31.2,14.8,12.4,18.2,6.8,7.4,9.2],backgroundColor:['#f87171','#f472b6','#60a5fa','#4ade80','#a78bfa','#fb923c','#94a3b8'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:8,font:{size:9}}}}}});
+    if(dc && window.Chart) new Chart(dc.getContext('2d'),{type:'doughnut',data:{labels:['Malaria (31.2%)','Maternal/Repro (14.8%)','Respiratory (12.4%)','Chronic NCD (18.2%)','TB/HIV (6.8%)','Injuries (7.4%)','Other (9.2%)'],datasets:[{data:[0,0,0,0,0,0,0],backgroundColor:['#f87171','#f472b6','#60a5fa','#4ade80','#a78bfa','#fb923c','#94a3b8'],borderColor:'#0d1c2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',boxWidth:8,font:{size:9}}}}}});
 
     // Immunisation trend
     var ic = document.getElementById('dhis2-imm-chart');
-    if(ic && window.Chart) new Chart(ic.getContext('2d'),{type:'line',data:{labels:['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],datasets:[{label:'Penta 3',data:[88.2,89.4,91.1,92.8,93.4,94.1,94.8,95.2,95.6],borderColor:'#4ade80',tension:.3,pointRadius:3,borderWidth:2},{label:'Measles 2',data:[82.4,84.1,85.8,87.2,88.6,89.9,91.2,92.1,93.4],borderColor:'#60a5fa',tension:.3,pointRadius:3,borderWidth:2},{label:'BCG',data:[94.1,94.8,95.4,96.1,96.4,96.8,97.1,97.4,97.8],borderColor:'#fcd34d',tension:.3,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}},min:78,max:100}}}});
+    if(ic && window.Chart) new Chart(ic.getContext('2d'),{type:'line',data:{labels:['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],datasets:[{label:'Penta 3',data:[0,0,0,0,0,0,0,0,0],borderColor:'#4ade80',tension:.3,pointRadius:3,borderWidth:2},{label:'Measles 2',data:[0,0,0,0,0,0,0,0,0],borderColor:'#60a5fa',tension:.3,pointRadius:3,borderWidth:2},{label:'BCG',data:[0,0,0,0,0,0,0,0,0],borderColor:'#fcd34d',tension:.3,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',boxWidth:9,font:{size:10}}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#64748b',font:{size:10}},min:78,max:100}}}});
   },200);
 }
 
@@ -11031,7 +10233,7 @@ function dhis2Surveillance(c) {
 // ── FHIR R4 BRIDGE ────────────────────────────────────────────
 function dhis2FHIR(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['FHIR Resources Synced','1,340','Last sync: 2 min ago','jade','up'],['DHIS2 Data Elements','284','Mapped from FHIR','sky','nt'],['Auto-reporting','28','Forms auto-populated','green','up'],['Sync Errors','0','All systems healthy','green','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
+  [['FHIR Resources Synced','0','—','jade','nt'],['DHIS2 Data Elements','0','Mapped from FHIR','sky','nt'],['Auto-reporting','0','Forms auto-populated','green','nt'],['Sync Errors','0','All systems healthy','green','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
   c.appendChild(kg);
 
   var g2 = el('div',{cls:'g2',style:{marginBottom:'1.25rem'}});
@@ -11119,7 +10321,7 @@ function dhis2Facilities(c) {
   c.appendChild(toolbar);
 
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Total Facilities','2,070','GHS registered','jade','nt'],['Reporting Facilities','1,892','91.4% reporting','green','up'],['Teaching Hospitals','7','Accra,Kumasi,Tamale+','amber','nt'],['CHPS Compounds','1,248','Last-mile communities','sky','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
+  [['Total Facilities','2,070','GHS registered','jade','nt'],['Reporting Facilities','0','—','green','nt'],['Teaching Hospitals','7','Accra,Kumasi,Tamale+','amber','nt'],['CHPS Compounds','1,248','Last-mile communities','sky','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
   c.appendChild(kg);
 
   var ft = el('div',{cls:'card'});
@@ -11159,7 +10361,7 @@ function dhis2Facilities(c) {
 // ── INDICATORS ────────────────────────────────────────────────
 function dhis2Indicators(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Total Indicators','47','WHO aligned','jade','nt'],['On Target','18','38% of monitored','green','nt'],['Near Target','19','Improving','amber','up'],['Below Target','10','Action required','red','dn']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
+  [['Total Indicators','47','WHO aligned','jade','nt'],['On Target','0','—','green','nt'],['Near Target','0','—','amber','nt'],['Below Target','0','—','red','nt']].forEach(function(k){kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4]));});
   c.appendChild(kg);
 
   var it = el('div',{cls:'card'});
@@ -11784,18 +10986,7 @@ var OHIE_COMPONENTS = [
    endpoints:284, uptime:'99.88%', latency:'210ms', icon:'📊'},
 ];
 
-var OHIE_TRANSACTIONS = [
-  {time:'09:51:04', type:'ITI-93', from:'Cardio AI EHR', to:'CR', msg:'Enrich Patient Identity — Akosua Mensah PT-00441 — Ghana Card GHA-190234-7 verified via NIA API', status:'bg'},
-  {time:'09:51:01', type:'ITI-65', from:'Cardio AI EHR', to:'SHR', msg:'Provide & Register Document — FHIR Bundle — 4 resources — Encounter + Condition + MedicationRequest + Observation', status:'bg'},
-  {time:'09:50:38', type:'ITI-78', from:'GeneXpert', to:'SHR', msg:'HL7 ORU→FHIR bridge — MTB+ DiagnosticReport DR-20260430-0289 — linked to PT-00289 in SHR', status:'bg'},
-  {time:'09:50:12', type:'ITI-45', from:'NHIA Claims', to:'CR', msg:'Patient Identity Query — verify NHIS membership GH-NHIS-4418873 — Kwame Darko — response: Active', status:'bg'},
-  {time:'09:49:44', type:'ADX', from:'Cardio AI DHIS2', to:'ADX', msg:'Weekly malaria aggregate — Northern Region — 3,812 confirmed cases — EWARN threshold breached — alert transmitted', status:'br'},
-  {time:'09:49:01', type:'SVS-11', from:'Cardio AI EHR', to:'TS', msg:'ValueSet expansion — Ghana STG 2023 antimalarials — returned 14 concepts including AL, IV Artesunate, Quinine', status:'bg'},
-  {time:'09:48:22', type:'ITI-47', from:'Korle Bu EHR', to:'CR', msg:'Patient Demographics Query — cross-facility MPI lookup — Kofi Agyemang — matched record PT-00382', status:'bg'},
-  {time:'09:47:55', type:'ATNA', from:'IOL', to:'Monitor', msg:'Audit: Billing Agent accessed PT-00441 record — Akosua Mensah — ICD-11 1F40 coded — claim CLM-08412 queued', status:'by'},
-  {time:'09:47:11', type:'ITI-38', from:'KATH EHR', to:'SHR', msg:'Cross-Enterprise Document Query — PT-00382 — returned 14 documents — last encounter 28 Apr 2026', status:'bg'},
-  {time:'09:46:30', type:'PIX', from:'Tamale Teaching', to:'CR', msg:'PIX Query — patient PT-00511 Kwame Darko — cross-reference returned — matched to PICU KATH record', status:'bg'},
-];
+var OHIE_TRANSACTIONS = [];
 
 var OHIE_PROFILES = [
   {profile:'ITI-93',name:'Enrich Patient Identity',vol:'PMIR',count:'14,441',status:'bg',desc:'Ghana Card NIA verification + NHIS eligibility at patient registration'},
@@ -11821,27 +11012,9 @@ var TERMINOLOGY_SYSTEMS = [
   {sys:'CVX (Vaccines)',publisher:'CDC',version:'2025',concepts:'214',use:'Ghana EPI vaccine codes · Penta 3 · Measles · BCG · Immunisation register'},
 ];
 
-var SHR_RESOURCES = [
-  {resource:'Patient',count:'142,807',trend:'↑ 312 today',note:'Ghana Card linked · NIA verified · NHIS linked'},
-  {resource:'Encounter',count:'3,847',trend:'↑ 1,082 today',note:'OPD + Inpatient + Telehealth + ANC'},
-  {resource:'Observation',count:'1,340',trend:'↑ 847 today',note:'Vitals + IoMT + Lab results (LOINC coded)'},
-  {resource:'Condition',count:'88,441',trend:'↑ 204 today',note:'ICD-11 coded · Ghana STG 2023 aligned'},
-  {resource:'MedicationRequest',count:'44,102',trend:'↑ 88 today',note:'Ghana RxNorm · NHIS formulary linked'},
-  {resource:'Immunization',count:'284,441',trend:'↑ 312 today',note:'Ghana EPI CVX codes · DHIS2 auto-sync'},
-  {resource:'DiagnosticReport',count:'12,844',trend:'↑ 47 today',note:'GeneXpert HL7 + PACS DICOM + Cardio SCAN'},
-  {resource:'Procedure',count:'8,204',trend:'↑ 28 today',note:'SNOMED CT · Surgical · NHIS procedure codes'},
-  {resource:'AllergyIntolerance',count:'14,882',trend:'— Stable',note:'SNOMED CT · Drug + food + environmental'},
-  {resource:'CarePlan',count:'6,441',trend:'↑ 18 today',note:'ANC · Chronic disease · TB DOTS plans'},
-];
+var SHR_RESOURCES = [];
 
-var CR_RECORDS = [
-  {id:'PT-00441',name:'Akosua Mensah',dob:'12 Mar 1991',sex:'F',ghcard:'GHA-190234-7',nhis:'GH-NHIS-2291874',facilities:3,status:'Verified',sc:'bg'},
-  {id:'PT-00511',name:'Kwame Darko',dob:'15 Jun 2018',sex:'M',ghcard:'GHA-840192-3',nhis:'GH-NHIS-4418873',facilities:2,status:'Verified',sc:'bg'},
-  {id:'PT-00382',name:'Kofi Agyemang',dob:'07 Nov 1966',sex:'M',ghcard:'GHA-210482-1',nhis:'GH-NHIS-1184562',facilities:5,status:'Verified',sc:'bg'},
-  {id:'PT-00290',name:'Abena Owusu',dob:'22 Aug 1998',sex:'F',ghcard:'GHA-330108-4',nhis:'GH-NHIS-3301029',facilities:2,status:'Verified',sc:'bg'},
-  {id:'PT-00199',name:'Ama Boateng',dob:'03 Feb 1980',sex:'F',ghcard:'GHA-109234-6',nhis:'GH-NHIS-5527614',facilities:4,status:'Verified',sc:'bg'},
-  {id:'PT-DUP-01',name:'Emmanuel Asante',dob:'14 Jun 1975',sex:'M',ghcard:'GHA-441892-9',nhis:'GH-NHIS-2209142',facilities:3,status:'Duplicate',sc:'br'},
-];
+var CR_RECORDS = [];
 
 var FR_FACILITIES = [
   {uid:'kBuTeachGH01',name:'Korle Bu Teaching Hospital',type:'Teaching',region:'Greater Accra',district:'Accra Metro',fhir:'Location/kBuTeachGH01',lat:'5.5468',lng:'-0.2314',active:true},
@@ -11870,9 +11043,9 @@ function ohieOverview(c) {
   // KPIs
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
   [['All Components Online','6/6','0 errors · All healthy','jade','up'],
-   ['Transactions Today','53,841','Avg 42ms latency','sky','up'],
-   ['FHIR Resources','1,340','SHR last sync 2 min ago','purple','up'],
-   ['Audit Events','31,204','ATNA compliant · DPA 2012','green','nt']
+   ['Transactions Today','0','—','sky','nt'],
+   ['FHIR Resources','0','—','purple','nt'],
+   ['Audit Events','0','ATNA compliant · DPA 2012','green','nt']
   ].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
@@ -11978,10 +11151,10 @@ function ohieTabJump(id) {
 // ── CLIENT REGISTRY ──────────────────────────────────────────
 function ohieCR(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Total Patient Identities','142,807','Master Patient Index','jade','up'],
-   ['Duplicate Alerts','3','Probabilistic matching','amber','nt'],
-   ['NIA Verified','138,441','Ghana Card confirmed','green','up'],
-   ['Cross-Facility Matches','8,234','Multi-facility patients','sky','up']
+  [['Total Patient Identities','0','Master Patient Index','jade','nt'],
+   ['Duplicate Alerts','0','Probabilistic matching','amber','nt'],
+   ['NIA Verified','0','Ghana Card confirmed','green','nt'],
+   ['Cross-Facility Matches','0','Multi-facility patients','sky','nt']
   ].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
@@ -12132,10 +11305,10 @@ function ohieFR(c) {
 // ── SHARED HEALTH RECORD ──────────────────────────────────────
 function ohieSHR(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['FHIR R4 Resources','504,311','SHR total · HAPI FHIR v6.8','jade','up'],
-   ['Patient Records','142,807','Longitudinal records','sky','up'],
-   ['Synced Today','1,340','All 13 pilot facilities','green','up'],
-   ['Cross-Facility Queries','2,104','Referral continuity','purple','up']
+  [['FHIR R4 Resources','0','SHR total · HAPI FHIR v6.8','jade','nt'],
+   ['Patient Records','0','Longitudinal records','sky','nt'],
+   ['Synced Today','0','—','green','nt'],
+   ['Cross-Facility Queries','0','Referral continuity','purple','nt']
   ].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
@@ -12282,18 +11455,18 @@ function ohieIOL(c) {
   thead.appendChild(thr); tbl.appendChild(thead);
   var tbody = el('tbody');
   [
-    ['CR — Patient Identity',  'SanteMPI :3000',  'FHIR R4 POST/GET', '14,441', '38ms',  'bg', 'Online'],
-    ['SHR — Document Exchange','HAPI FHIR :8080', 'FHIR R4 POST',     '3,847',  '124ms', 'bg', 'Online'],
-    ['TS — Terminology',       'HAPI TS :8090',   'FHIR GET',         '9,842',  '8ms',   'bg', 'Online'],
-    ['FR — Facility Registry', 'GOFR :3000',      'FHIR R4 GET',      '2,104',  '18ms',  'bg', 'Online'],
-    ['ADX — DHIS2 Sync',       'DHIS2 :8080',     'ADX POST',         '284',    '210ms', 'bg', 'Online'],
-    ['NHIA — Claims API',       'NHIA :443',       'REST POST',        '1,204',  '180ms', 'bg', 'Online'],
-    ['NIA — Ghana Card',        'NIA :443',        'REST GET',         '14,441', '95ms',  'bg', 'Online'],
-    ['GeneXpert — HL7',         'GeneXpert :2575', 'HL7 v2.5 ORU',    '284',    '55ms',  'bg', 'Online'],
-    ['PACS — DICOM',            'Orthanc :8042',   'DICOMweb REST',    '47',     '340ms', 'bg', 'Online'],
-    ['MTN MoMo — SMS',          'MTN API :443',    'REST POST',        '1,441',  '220ms', 'bg', 'Online'],
-    ['WHO EWARN',               'WHO AFRO :443',   'XML/ADX POST',     '3',      '580ms', 'by', 'Slow'],
-    ['Audit — ATNA',            'OpenHIM Audit',   'IHE ATNA UDP/TLS', '31,204', '2ms',   'bg', 'Online'],
+    ['CR — Patient Identity',  'SanteMPI :3000',  'FHIR R4 POST/GET', '0', '38ms',  'bg', 'Online'],
+    ['SHR — Document Exchange','HAPI FHIR :8080', 'FHIR R4 POST',     '0',  '124ms', 'bg', 'Online'],
+    ['TS — Terminology',       'HAPI TS :8090',   'FHIR GET',         '0',  '8ms',   'bg', 'Online'],
+    ['FR — Facility Registry', 'GOFR :3000',      'FHIR R4 GET',      '0',  '18ms',  'bg', 'Online'],
+    ['ADX — DHIS2 Sync',       'DHIS2 :8080',     'ADX POST',         '0',    '210ms', 'bg', 'Online'],
+    ['NHIA — Claims API',       'NHIA :443',       'REST POST',        '0',  '180ms', 'bg', 'Online'],
+    ['NIA — Ghana Card',        'NIA :443',        'REST GET',         '0', '95ms',  'bg', 'Online'],
+    ['GeneXpert — HL7',         'GeneXpert :2575', 'HL7 v2.5 ORU',    '0',    '55ms',  'bg', 'Online'],
+    ['PACS — DICOM',            'Orthanc :8042',   'DICOMweb REST',    '0',     '340ms', 'bg', 'Online'],
+    ['MTN MoMo — SMS',          'MTN API :443',    'REST POST',        '0',  '220ms', 'bg', 'Online'],
+    ['WHO EWARN',               'WHO AFRO :443',   'XML/ADX POST',     '0',      '580ms', 'by', 'Slow'],
+    ['Audit — ATNA',            'OpenHIM Audit',   'IHE ATNA UDP/TLS', '0', '2ms',   'bg', 'Online'],
   ].forEach(function(r){
     var tr2 = el('tr');
     tr2.appendChild(el('td',{style:{fontWeight:'600',color:'var(--white)',fontSize:'12px'}},r[0]));
@@ -12504,50 +11677,13 @@ function buildLab() {
   return pane;
 }
 
-var LAB_ORDERS = [
-  {id:'LO-00441-1',patient:'Akosua Mensah',pid:'PT-00441',tests:['Malaria RDT','FBC','Blood glucose'],urgency:'Routine',ordered:'Today 09:24',orderedBy:'Dr. E. Asante',status:'Resulted',sc:'bg'},
-  {id:'LO-00511-1',patient:'Kwame Darko',pid:'PT-00511',tests:['Blood glucose','FBC','Malaria blood film','Blood culture'],urgency:'STAT',ordered:'Today 08:10',orderedBy:'Dr. P. Alhassan',status:'Pending',sc:'br'},
-  {id:'LO-00382-1',patient:'Kofi Agyemang',pid:'PT-00382',tests:['HbA1c','FBC','U&E','eGFR','LFTs','Lipid profile'],urgency:'Routine',ordered:'28 Apr 14:30',orderedBy:'Dr. S. Boateng',status:'Resulted',sc:'bg'},
-  {id:'LO-00290-1',patient:'Abena Owusu',pid:'PT-00290',tests:['FBC','Urine M/C/S','Random blood glucose','Hb electrophoresis'],urgency:'Routine',ordered:'28 Apr 10:00',orderedBy:'Midwife A. Quaye',status:'Partial',sc:'by'},
-  {id:'LO-00199-1',patient:'Ama Boateng',pid:'PT-00199',tests:['U&E','eGFR','BNP','ECG','CXR'],urgency:'Urgent',ordered:'26 Apr 11:00',orderedBy:'Dr. R. Mensah-Bonsu',status:'Resulted',sc:'bg'},
-  {id:'LO-00289-1',patient:'Emmanuel Asare',pid:'PT-00289',tests:['GeneXpert MTB/RIF'],urgency:'Urgent',ordered:'28 Apr 09:00',orderedBy:'Dr. K. Owusu',status:'Critical',sc:'br'},
-];
+var LAB_ORDERS = [];
 
-var LAB_RESULTS = [
-  // Akosua Mensah — malaria
-  {id:'R-00441-1',patient:'Akosua Mensah',pid:'PT-00441',test:'Malaria RDT (Pf antigen)',loinc:'32700-7',value:'POSITIVE — P. falciparum',unit:'',ref:'Negative',flag:'H',sc:'br',date:'Today 09:40',verified:true,fhir:true},
-  {id:'R-00441-2',patient:'Akosua Mensah',pid:'PT-00441',test:'Haemoglobin',loinc:'718-7',value:'10.2',unit:'g/dL',ref:'12.0–16.0',flag:'L',sc:'by',date:'Today 09:40',verified:true,fhir:true},
-  {id:'R-00441-3',patient:'Akosua Mensah',pid:'PT-00441',test:'Blood Glucose (random)',loinc:'2339-0',value:'4.8',unit:'mmol/L',ref:'3.9–7.8',flag:'N',sc:'bg',date:'Today 09:40',verified:true,fhir:true},
-  {id:'R-00441-4',patient:'Akosua Mensah',pid:'PT-00441',test:'WBC',loinc:'6690-2',value:'11.4',unit:'×10⁹/L',ref:'4.0–11.0',flag:'H',sc:'by',date:'Today 09:40',verified:true,fhir:true},
-  // Kwame Darko — PICU severe malaria
-  {id:'R-00511-1',patient:'Kwame Darko',pid:'PT-00511',test:'Blood Glucose (urgent)',loinc:'2339-0',value:'2.8',unit:'mmol/L',ref:'3.9–6.1',flag:'LL',sc:'br',date:'Today 08:20',verified:true,fhir:true},
-  {id:'R-00511-2',patient:'Kwame Darko',pid:'PT-00511',test:'Haemoglobin',loinc:'718-7',value:'7.4',unit:'g/dL',ref:'11.5–14.5',flag:'LL',sc:'br',date:'Today 08:20',verified:true,fhir:true},
-  {id:'R-00511-3',patient:'Kwame Darko',pid:'PT-00511',test:'Platelet count',loinc:'777-3',value:'64',unit:'×10⁹/L',ref:'150–400',flag:'L',sc:'by',date:'Today 08:20',verified:true,fhir:true},
-  {id:'R-00511-4',patient:'Kwame Darko',pid:'PT-00511',test:'Malaria blood film',loinc:'32700-7',value:'P. falciparum — heavy parasitaemia (+++)',unit:'',ref:'Negative',flag:'H',sc:'br',date:'Today 08:35',verified:true,fhir:true},
-  // Kofi Agyemang — chronic
-  {id:'R-00382-1',patient:'Kofi Agyemang',pid:'PT-00382',test:'HbA1c',loinc:'4548-4',value:'8.4',unit:'%',ref:'<7.0% (target T2DM)',flag:'H',sc:'by',date:'28 Apr 15:10',verified:true,fhir:true},
-  {id:'R-00382-2',patient:'Kofi Agyemang',pid:'PT-00382',test:'eGFR (CKD-EPI)',loinc:'62238-1',value:'62',unit:'mL/min/1.73m²',ref:'>60',flag:'N',sc:'bg',date:'28 Apr 15:10',verified:true,fhir:true},
-  {id:'R-00382-3',patient:'Kofi Agyemang',pid:'PT-00382',test:'Potassium (K+)',loinc:'2823-3',value:'5.1',unit:'mmol/L',ref:'3.5–5.0',flag:'H',sc:'by',date:'28 Apr 15:10',verified:true,fhir:true},
-  {id:'R-00382-4',patient:'Kofi Agyemang',pid:'PT-00382',test:'Creatinine',loinc:'2160-0',value:'128',unit:'μmol/L',ref:'62–106',flag:'H',sc:'by',date:'28 Apr 15:10',verified:true,fhir:true},
-  {id:'R-00382-5',patient:'Kofi Agyemang',pid:'PT-00382',test:'Total Cholesterol',loinc:'2093-3',value:'6.8',unit:'mmol/L',ref:'<5.0',flag:'H',sc:'br',date:'28 Apr 15:10',verified:true,fhir:true},
-  // GeneXpert
-  {id:'R-00289-1',patient:'Emmanuel Asare',pid:'PT-00289',test:'GeneXpert MTB/RIF (Sputum)',loinc:'90271-0',value:'MTB DETECTED — RIF SENSITIVE',unit:'',ref:'Not detected',flag:'H',sc:'br',date:'28 Apr 10:22',verified:true,fhir:true},
-];
+var LAB_RESULTS = [];
 
-var CRITICAL_VALUES = [
-  {patient:'Kwame Darko',pid:'PT-00511',test:'Blood Glucose',value:'2.8 mmol/L',threshold:'<3.0 mmol/L (severe hypoglycaemia)',action:'IV Dextrose 10% initiated · Dr. Alhassan notified · PICU',time:'08:20',sc:'br',acked:false},
-  {patient:'Kwame Darko',pid:'PT-00511',test:'Haemoglobin',value:'7.4 g/dL',threshold:'<8.0 g/dL (children) — transfusion threshold',action:'Crossmatch ordered · Blood bank notified · Transfusion decision pending',time:'08:20',sc:'br',acked:false},
-  {patient:'Emmanuel Asare',pid:'PT-00289',test:'GeneXpert MTB/RIF',value:'MTB DETECTED',threshold:'Any positive — NTCP mandatory notification',action:'NTCP register updated · DOTS initiated · Contact tracing started · Dr. Owusu notified',time:'10:22',sc:'br',acked:true},
-  {patient:'Kofi Agyemang',pid:'PT-00382',test:'Total Cholesterol',value:'6.8 mmol/L',threshold:'>6.2 mmol/L — high CVD risk',action:'Statin therapy review · Dr. Boateng notified',time:'15:10',sc:'by',acked:true},
-];
+var CRITICAL_VALUES = [];
 
-var GENEXPERT_RESULTS = [
-  {id:'GX-00289-1',patient:'Emmanuel Asare',pid:'PT-00289',sample:'Sputum × 2',date:'28 Apr 09:00',resulted:'28 Apr 10:22',result:'MTB DETECTED',rif:'RIF SENSITIVE',ct:'16.2',control:'Valid',ntcp:true,fhir:true,sc:'br'},
-  {id:'GX-00144-1',patient:'Abena Quaye',pid:'PT-00144',sample:'Sputum',date:'27 Apr 11:00',resulted:'27 Apr 12:35',result:'MTB NOT DETECTED',rif:'N/A',ct:'N/A',control:'Valid',ntcp:false,fhir:true,sc:'bg'},
-  {id:'GX-00088-1',patient:'Kweku Mensah',pid:'PT-00088',sample:'CSF',date:'26 Apr 14:00',resulted:'26 Apr 15:44',result:'MTB DETECTED',rif:'RIF RESISTANT (RR-TB)',ct:'22.8',control:'Valid',ntcp:true,fhir:true,sc:'br'},
-  {id:'GX-00071-1',patient:'Yaa Asante',pid:'PT-00071',sample:'Sputum',date:'25 Apr 09:30',resulted:'25 Apr 11:12',result:'MTB NOT DETECTED',rif:'N/A',ct:'N/A',control:'Valid',ntcp:false,fhir:true,sc:'bg'},
-  {id:'GX-ERR-01',patient:'Kwame Boateng',pid:'PT-00392',sample:'Sputum',date:'Today 08:00',resulted:'Pending',result:'INVALID — CARTRIDGE ERROR',rif:'N/A',ct:'N/A',control:'Invalid — repeat required',ntcp:false,fhir:false,sc:'by'},
-];
+var GENEXPERT_RESULTS = [];
 
 function labRender(tab, c) {
   if      (tab==='orders')      labOrders(c);
@@ -12569,7 +11705,7 @@ function labOrders(c) {
     return;
   }
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Orders Today','28','All wards','jade','up'],['Pending Results','6','Awaiting analysis','amber','nt'],['Critical Results','3','Action required','red','nt'],['FHIR Synced','22','All resulted','green','up']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['Orders Today','0','All wards','jade','nt'],['Pending Results','0','Awaiting analysis','amber','nt'],['Critical Results','0','Action required','red','nt'],['FHIR Synced','0','—','green','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
   // New order form
@@ -12636,7 +11772,7 @@ function labResults(c) {
     return;
   }
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Results Today','22','All patients','jade','up'],['Abnormal','9','Require review','amber','nt'],['Critical','3','Immediate action','red','nt'],['FHIR Observations','22','Synced to SHR','green','up']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['Results Today','0','All patients','jade','nt'],['Abnormal','0','Require review','amber','nt'],['Critical','0','Immediate action','red','nt'],['FHIR Observations','0','Synced to SHR','green','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
   var rt = el('div',{cls:'card'});
@@ -12683,7 +11819,7 @@ function labGeneXpert(c) {
     return;
   }
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['GeneXpert Tests Today','5','Tamale Teaching Lab','jade','nt'],['MTB Detected','2','1 RIF resistant','red','nt'],['NTCP Notified','2','Auto-reported via HL7','green','up'],['Invalid Results','1','Repeat cartridge required','amber','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['GeneXpert Tests Today','0','—','jade','nt'],['MTB Detected','0','—','red','nt'],['NTCP Notified','0','—','green','nt'],['Invalid Results','0','—','amber','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
   var gt = el('div',{cls:'card',style:{marginBottom:'1.25rem'}});
@@ -12750,7 +11886,7 @@ function labCritical(c) {
     return;
   }
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Critical Values — Active','2','Immediate action','red','nt'],['Acknowledged','2','Action taken','green','nt'],['Auto-notifications Sent','4','Clinicians alerted','sky','up'],['Response Time (avg)','4 min','SLA: <5 min','jade','up']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['Critical Values — Active','0','Immediate action','red','nt'],['Acknowledged','0','Action taken','green','nt'],['Auto-notifications Sent','0','Clinicians alerted','sky','nt'],['Response Time (avg)','—','SLA: <5 min','jade','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
   CRITICAL_VALUES.forEach(function(cv){
@@ -12866,7 +12002,7 @@ function labChemistry(c) {
 // ── MICROBIOLOGY ────────────────────────────────────────────
 function labMicrobiology(c) {
   var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
-  [['Blood Cultures Active','3','48–72h incubation','amber','nt'],['GeneXpert MTB+ Today','2','NTCP notified','red','nt'],['Malaria RDT+ Today','14','AL treatment initiated','by','up'],['Urine M/C/S Pending','4','2–3 days','jade','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  [['Blood Cultures Active','0','48–72h incubation','amber','nt'],['GeneXpert MTB+ Today','0','NTCP notified','red','nt'],['Malaria RDT+ Today','0','AL treatment initiated','by','nt'],['Urine M/C/S Pending','0','2–3 days','jade','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
   c.appendChild(kg);
 
   var g2 = el('div',{cls:'g2'});
@@ -13047,78 +12183,7 @@ var LOINC_PANELS = [
 ];
 
 // HL7 v2.5.1 ORU^R01 message templates
-var HL7_MESSAGES = [
-  {
-    id:'MSG-0441-001', type:'ORU^R01', status:'Final',
-    pid:'PT-00441', patient:'Akosua Mensah Boateng', dob:'19910318', sex:'F',
-    orderId:'LO-00441-1', placerId:'ORD-00441-001', fillerId:'LAB-GH-001',
-    test:'Malaria RDT (Pf antigen)', loinc:'32700-7', loincName:'Malaria rapid test - P. falciparum antigen',
-    value:'POSITIVE', unit:'', refRange:'Negative', abnFlag:'A',
-    resultTime:'20260513094000', reportTime:'20260513094200',
-    facility:'Korle Bu Teaching Hospital', orderer:'Dr. E. Asante', verifier:'Lab Scientist J. Darko',
-    priority:'R', fhirObsId:'obs-PT00441-32700-7-001',
-  },
-  {
-    id:'MSG-0441-002', type:'ORU^R01', status:'Final',
-    pid:'PT-00441', patient:'Akosua Mensah Boateng', dob:'19910318', sex:'F',
-    orderId:'LO-00441-1', placerId:'ORD-00441-002', fillerId:'LAB-GH-001',
-    test:'Haemoglobin', loinc:'718-7', loincName:'Hemoglobin [Mass/volume] in Blood',
-    value:'10.2', unit:'g/dL', refRange:'12.0-16.0', abnFlag:'L',
-    resultTime:'20260513094200', reportTime:'20260513094400',
-    facility:'Korle Bu Teaching Hospital', orderer:'Dr. E. Asante', verifier:'Lab Scientist J. Darko',
-    priority:'R', fhirObsId:'obs-PT00441-718-7-001',
-  },
-  {
-    id:'MSG-0511-001', type:'ORU^R01', status:'Final',
-    pid:'PT-00511', patient:'Kwame Darko Asante', dob:'20190601', sex:'M',
-    orderId:'LO-00511-1', placerId:'ORD-00511-001', fillerId:'LAB-GH-001',
-    test:'Blood Glucose (urgent)', loinc:'2339-0', loincName:'Glucose [Mass/volume] in Blood',
-    value:'2.8', unit:'mmol/L', refRange:'3.9-6.1', abnFlag:'LL',
-    resultTime:'20260513082000', reportTime:'20260513082100',
-    facility:'Tamale Teaching Hospital', orderer:'Dr. P. Alhassan', verifier:'Lab Scientist A. Musah',
-    priority:'S', fhirObsId:'obs-PT00511-2339-0-001',
-  },
-  {
-    id:'MSG-0511-002', type:'ORU^R01', status:'Final',
-    pid:'PT-00511', patient:'Kwame Darko Asante', dob:'20190601', sex:'M',
-    orderId:'LO-00511-1', placerId:'ORD-00511-002', fillerId:'LAB-GH-001',
-    test:'Haemoglobin (PICU)', loinc:'718-7', loincName:'Hemoglobin [Mass/volume] in Blood',
-    value:'7.4', unit:'g/dL', refRange:'11.5-14.5', abnFlag:'LL',
-    resultTime:'20260513082200', reportTime:'20260513082300',
-    facility:'Tamale Teaching Hospital', orderer:'Dr. P. Alhassan', verifier:'Lab Scientist A. Musah',
-    priority:'S', fhirObsId:'obs-PT00511-718-7-001',
-  },
-  {
-    id:'MSG-0382-001', type:'ORU^R01', status:'Final',
-    pid:'PT-00382', patient:'Kofi Agyemang Prempeh', dob:'19670912', sex:'M',
-    orderId:'LO-00382-1', placerId:'ORD-00382-001', fillerId:'LAB-GH-001',
-    test:'HbA1c', loinc:'4548-4', loincName:'Hemoglobin A1c/Hemoglobin.total in Blood',
-    value:'8.4', unit:'%', refRange:'<7.0', abnFlag:'H',
-    resultTime:'20260428151000', reportTime:'20260428151500',
-    facility:'Komfo Anokye Teaching Hospital', orderer:'Dr. S. Ofori', verifier:'Lab Scientist K. Amoah',
-    priority:'R', fhirObsId:'obs-PT00382-4548-4-001',
-  },
-  {
-    id:'MSG-0382-002', type:'ORU^R01', status:'Final',
-    pid:'PT-00382', patient:'Kofi Agyemang Prempeh', dob:'19670912', sex:'M',
-    orderId:'LO-00382-1', placerId:'ORD-00382-002', fillerId:'LAB-GH-001',
-    test:'Potassium (K+)', loinc:'2823-3', loincName:'Potassium [Moles/volume] in Serum or Plasma',
-    value:'5.1', unit:'mmol/L', refRange:'3.5-5.0', abnFlag:'H',
-    resultTime:'20260428151200', reportTime:'20260428151700',
-    facility:'Komfo Anokye Teaching Hospital', orderer:'Dr. S. Ofori', verifier:'Lab Scientist K. Amoah',
-    priority:'R', fhirObsId:'obs-PT00382-2823-3-001',
-  },
-  {
-    id:'MSG-0289-001', type:'ORU^R01', status:'Final',
-    pid:'PT-00289', patient:'Emmanuel Asare Boateng', dob:'19850420', sex:'M',
-    orderId:'LO-00289-1', placerId:'ORD-00289-001', fillerId:'LAB-GH-001',
-    test:'GeneXpert MTB/RIF (Sputum)', loinc:'90271-0', loincName:'Mycobacterium tuberculosis DNA [Presence] by Molecular method',
-    value:'MTB DETECTED - RIF SENSITIVE', unit:'', refRange:'Not detected', abnFlag:'A',
-    resultTime:'20260428102200', reportTime:'20260428102500',
-    facility:'Korle Bu Teaching Hospital', orderer:'Dr. M. Quaye', verifier:'Lab Scientist E. Tetteh',
-    priority:'R', fhirObsId:'obs-PT00289-90271-0-001',
-  },
-];
+var HL7_MESSAGES = [];
 
 // ── HL7 ORU^R01 message builder ───────────────────────────────
 function buildHL7Message(msg) {
@@ -13447,95 +12512,11 @@ function labHL7(c) {
 // ============================================================
 
 // ── CHPS data ─────────────────────────────────────────────
-var CHPS_COMPOUNDS = [
-  {id:'CHPS-N01', name:'Nyohini CHPS Compound', district:'Tamale Metro', region:'Northern',
-   worker:'Agnes Alhassan', workerPhone:'+233-24-901-2234', pop:1840, under5:312, pregnant:28,
-   device:'CHPS-Hub v2', tablet:'ST-101 (Solar)', battery:68, signal:'2G (EDGE)', lastSync:'45s ago',
-   offlineMinutes:2, syncRate:94, patientsToday:24, alertsToday:3,
-   pendingRecords:4, pendingReferrals:1, status:'online',
-   gps:'9.4034N, -0.8424W', coords:[9.4034,-0.8424]},
-  {id:'CHPS-U01', name:'Navrongo Zone 3 CHPS', district:'Kassena-Nankana', region:'Upper East',
-   worker:'Comfort Atugeba', workerPhone:'+233-24-812-4490', pop:2210, under5:398, pregnant:34,
-   device:'CHPS-Hub v2', tablet:'ST-101 (Solar)', battery:91, signal:'2G (GPRS)', lastSync:'3m 12s ago',
-   offlineMinutes:180, syncRate:87, patientsToday:18, alertsToday:1,
-   pendingRecords:9, pendingReferrals:2, status:'offline',
-   gps:'10.8936N, -1.0921W', coords:[10.8936,-1.0921]},
-  {id:'CHPS-W01', name:'Jomoro District CHPS 4', district:'Jomoro', region:'Western',
-   worker:'Felicia Baah Korsah', workerPhone:'+233-27-445-3312', pop:970, under5:184, pregnant:19,
-   device:'CHPS-Hub v2', tablet:'ST-101 (Solar)', battery:55, signal:'2G (EDGE)', lastSync:'12m ago',
-   offlineMinutes:720, syncRate:78, patientsToday:11, alertsToday:0,
-   pendingRecords:14, pendingReferrals:0, status:'offline',
-   gps:'4.7421N, -2.8843W', coords:[4.7421,-2.8843]},
-  {id:'CHPS-UW01', name:'Lawra CHPS Compound 2', district:'Lawra', region:'Upper West',
-   worker:'Perpetua Dakurah', workerPhone:'+233-20-761-0098', pop:1540, under5:276, pregnant:22,
-   device:'CHPS-Hub v2', tablet:'ST-101 (Solar)', battery:82, signal:'No signal (offline)', lastSync:'2h 14m ago',
-   offlineMinutes:134, syncRate:100, patientsToday:15, alertsToday:2,
-   pendingRecords:7, pendingReferrals:1, status:'offline',
-   gps:'10.6317N, -2.8982W', coords:[10.6317,-2.8982]},
-  {id:'CHPS-OTI01', name:'Gushegu CHPS Zone 1', district:'Gushegu', region:'Northern',
-   worker:'Amina Sulemana', workerPhone:'+233-55-234-8871', pop:1120, under5:201, pregnant:17,
-   device:'CHPS-Hub v2', tablet:'ST-101 (Solar)', battery:74, signal:'2G (EDGE)', lastSync:'28s ago',
-   offlineMinutes:0, syncRate:98, patientsToday:9, alertsToday:0,
-   pendingRecords:2, pendingReferrals:0, status:'online',
-   gps:'9.9253N, -0.2854W', coords:[9.9253,-0.2854]},
-  {id:'CHPS-BA01', name:'Kintampo South CHPS', district:'Kintampo South', region:'Bono East',
-   worker:'Joana Owusu Acheampong', workerPhone:'+233-24-500-2291', pop:1680, under5:302, pregnant:26,
-   device:'CHPS-Hub v2', tablet:'ST-101 (Solar)', battery:39, signal:'2G (GPRS)', lastSync:'1h 5m ago',
-   offlineMinutes:65, syncRate:91, patientsToday:20, alertsToday:1,
-   pendingRecords:6, pendingReferrals:1, status:'online',
-   gps:'8.0614N, -1.7284W', coords:[8.0614,-1.7284]},
-];
+var CHPS_COMPOUNDS = [];
 
-var CHPS_REGISTER = [
-  {id:'CR-N01-001',compound:'CHPS-N01',patient:'Fatima Al-Hassan',pid:'PT-C001',age:4,sex:'F',
-   type:'Under-5',visitDate:'Today 09:15',chiefComplaint:'Fever 2 days, poor feeding',
-   vitals:{temp:38.6,hr:118,rr:28,muac:12.8,weight:14.2},
-   assessment:'Suspected malaria — RDT pending',icd11:'1F40',
-   action:'Malaria RDT ordered. AL if positive. Refer if danger signs.',
-   synced:true,fhir:true,news2p:6},
-  {id:'CR-N01-002',compound:'CHPS-N01',patient:'Abibatu Mumuni',pid:'PT-C002',age:26,sex:'F',
-   type:'ANC',visitDate:'Today 09:45',chiefComplaint:'ANC visit — 28 weeks',
-   vitals:{bp:'132/88',hr:84,temp:36.8,weight:67.4,fetalHR:148},
-   assessment:'Mild gestational hypertension — monitor BP',icd11:'JA22.1',
-   action:'Calcium 600mg OD. BP recheck in 1 week. Escalate if >=140/90.',
-   synced:true,fhir:true,news2p:2},
-  {id:'CR-U01-001',compound:'CHPS-U01',patient:'Ama Atia Awinpoka',pid:'PT-C003',age:2,sex:'F',
-   type:'Under-5',visitDate:'Today 10:30',chiefComplaint:'Diarrhoea 4 days, weight loss',
-   vitals:{temp:37.2,hr:108,rr:24,muac:11.1,weight:9.8},
-   assessment:'Moderate acute malnutrition (MAM). Dehydration mild.',icd11:'5B56.1',
-   action:'ORS 50ml/kg over 4h. RUTF. Recheck MUAC in 1 week. Refer if MUAC <11.5.',
-   synced:false,fhir:false,news2p:4},
-  {id:'CR-W01-001',compound:'CHPS-W01',patient:'Abena Quansah',pid:'PT-C004',age:31,sex:'F',
-   type:'ANC',visitDate:'Yesterday 14:20',chiefComplaint:'ANC — 36 weeks. Headache today.',
-   vitals:{bp:'148/96',hr:90,temp:37.0,weight:72.1,fetalHR:156},
-   assessment:'Pre-eclampsia — refer urgently to district hospital',icd11:'JA23',
-   action:'EMERGENCY REFERRAL to Jomoro District Hospital. MgSO4 IM per protocol. Accompany patient.',
-   synced:false,fhir:false,news2p:5},
-  {id:'CR-UW01-001',compound:'CHPS-UW01',patient:'Ayishetu Dery',pid:'PT-C005',age:58,sex:'F',
-   type:'Chronic',visitDate:'Today 08:00',chiefComplaint:'Follow-up hypertension',
-   vitals:{bp:'162/98',hr:76,temp:36.5,weight:71.2},
-   assessment:'Hypertension uncontrolled — medication compliance issue',icd11:'BA00',
-   action:'Amlodipine 5mg OD counselling. Lifestyle. Refer to district if BP >160/100 at next visit.',
-   synced:false,fhir:false,news2p:2},
-  {id:'CR-BA01-001',compound:'CHPS-BA01',patient:'Kwaku Owusu Boateng',pid:'PT-C006',age:7,sex:'M',
-   type:'Under-5',visitDate:'Today 11:10',chiefComplaint:'Fever 1 day, rapid breathing',
-   vitals:{temp:39.4,hr:136,rr:44,muac:13.2,weight:18.0},
-   assessment:'Suspected severe pneumonia — DANGER SIGN (RR >40 in child)',icd11:'CA40',
-   action:'REFER IMMEDIATELY to Kintampo South District Hospital. Amoxicillin 40mg/kg IM. O2 if available.',
-   synced:true,fhir:true,news2p:8},
-];
+var CHPS_REGISTER = [];
 
-var CHPS_SYNC_LOG = [
-  {ts:'16:47:02',compound:'CHPS-N01',type:'FHIR Bundle Push',records:4,size:'18KB',status:'Success',latency:'4.2s',signal:'2G 68kbps'},
-  {ts:'16:46:58',compound:'CHPS-N01',type:'ICD-11 Condition',records:1,size:'2.1KB',status:'Success',latency:'1.8s',signal:'2G 68kbps'},
-  {ts:'16:44:30',compound:'CHPS-OTI01',type:'FHIR Bundle Push',records:2,size:'9KB',status:'Success',latency:'6.1s',signal:'2G 42kbps'},
-  {ts:'16:30:00',compound:'CHPS-BA01',type:'FHIR Bundle Push',records:6,size:'27KB',status:'Success',latency:'8.3s',signal:'2G 55kbps'},
-  {ts:'14:10:00',compound:'CHPS-U01',type:'Bundle queued — offline',records:9,size:'41KB',status:'Queued',latency:'—',signal:'No signal'},
-  {ts:'12:05:00',compound:'CHPS-W01',type:'Bundle queued — offline',records:14,size:'63KB',status:'Queued',latency:'—',signal:'No signal'},
-  {ts:'10:28:00',compound:'CHPS-UW01',type:'Partial sync (offline buffer)',records:5,size:'22KB',status:'Partial',latency:'12.4s',signal:'2G 28kbps'},
-  {ts:'09:00:00',compound:'CHPS-N01',type:'DHIS2 ADX 2.0 push',records:1,size:'3KB',status:'Success',latency:'2.9s',signal:'2G 68kbps'},
-  {ts:'08:45:00',compound:'CHPS-OTI01',type:'NHIS claims batch',records:3,size:'8KB',status:'Success',latency:'3.7s',signal:'2G 55kbps'},
-];
+var CHPS_SYNC_LOG = [];
 
 var CHPS_PROTOCOLS = [
   {id:'P01',title:'Malaria Case Management (Ghana STG 2023)',level:'Level A',
