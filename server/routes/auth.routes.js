@@ -25,7 +25,8 @@ if (process.env.GOOGLE_CLIENT_ID) {
   passport.use(new GoogleStrategy({
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  `${CLIENT}/auth/google/callback`,
+    callbackURL:  "/auth/google/callback",
+    proxy: true,
     passReqToCallback: true,
   }, async (req, at, rt, profile, done) => {
     try { done(null, await oauthUpsert(profile, "google", req)); }
@@ -38,7 +39,7 @@ if (process.env.MICROSOFT_CLIENT_ID) {
   passport.use(new MicrosoftStrategy({
     clientID:     process.env.MICROSOFT_CLIENT_ID,
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-    callbackURL:  `${CLIENT}/auth/microsoft/callback`,
+    callbackURL:  "/auth/microsoft/callback",
     tenant:       process.env.MICROSOFT_TENANT_ID || "common",
     scope:        ["user.read","openid","profile","email"],
     passReqToCallback: true,
