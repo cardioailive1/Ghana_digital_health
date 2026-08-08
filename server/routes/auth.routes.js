@@ -18,19 +18,14 @@ const COOKIE_OPTS = {
   sameSite: "strict",
   maxAge:   8 * 60 * 60 * 1000,   // 8h — HIPAA automatic logoff
 };
-function getHost(req) {
-  const proto = req ? (req.headers["x-forwarded-proto"] || req.protocol) : "https";
-  const host  = req ? (req.headers["x-forwarded-host"] || req.headers.host) : "cardio-ai-ghana.onrender.com";
-  return `${proto}://${host}`;
-}
-const CLIENT_URL = process.env.CLIENT_URL || "https://cardio-ai-ghana.onrender.com";
+const CALLBACK_BASE = "https://cardio-ai-ghana.onrender.com";
 
 // ── Passport — Google ─────────────────────────────────────────
 if (process.env.GOOGLE_CLIENT_ID) {
   passport.use(new GoogleStrategy({
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  `${CLIENT_URL}/auth/google/callback`,
+    callbackURL:  "https://cardio-ai-ghana.onrender.com/auth/google/callback",
     passReqToCallback: true,
   }, async (req, at, rt, profile, done) => {
     try { done(null, await oauthUpsert(profile, "google", req)); }
@@ -43,7 +38,7 @@ if (process.env.MICROSOFT_CLIENT_ID) {
   passport.use(new MicrosoftStrategy({
     clientID:     process.env.MICROSOFT_CLIENT_ID,
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-    callbackURL:  `${CLIENT_URL}/auth/microsoft/callback`,
+    callbackURL:  "https://cardio-ai-ghana.onrender.com/auth/microsoft/callback",
     tenant:       process.env.MICROSOFT_TENANT_ID || "common",
     scope:        ["user.read","openid","profile","email"],
     passReqToCallback: true,
