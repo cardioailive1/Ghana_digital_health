@@ -73,13 +73,28 @@ app.use("/api",       aiRoutes);
 app.use("/api/audit", auditRoute);
 app.use("/api",       platformRoutes);
 
-// ── 6. SPA fallback LAST — after static + routes ─────────────
-// Any remaining GET that isn't /api or /auth → serve index.html
+// ── 6. Root + fallback → serve the Ghana Digital Health Platform ─
+// The platform (public/platform.html) is the primary entry point.
+// It ships its own login gate and calls the /api/* + /auth/* routes.
+// Static assets (/assets, /platform.html, logos) are already served
+// above by express.static(PUBLIC)/(DIST), so they resolve first.
+const PLATFORM_HTML = path.join(PUBLIC, "platform.html");
+
+app.get("/", (req, res) => {
+  res.sendFile(PLATFORM_HTML);
+});
+
+// Legacy React app (login/clinical-assistant SPA) still reachable at /app
 if (isProd) {
-  app.get("*", (req, res) => {
+  app.get(["/app", "/app/*"], (req, res) => {
     res.sendFile(path.join(DIST, "index.html"));
   });
 }
+
+// Any other non-API/non-auth GET → the platform (client handles the rest)
+app.get("*", (req, res) => {
+  res.sendFile(PLATFORM_HTML);
+});
 
 // ── 7. Global error handler ───────────────────────────────────
 app.use((err, req, res, next) => {
