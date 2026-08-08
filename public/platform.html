@@ -377,6 +377,173 @@ tr:last-child td{border-bottom:none}
   <main id="main"></main>
 </div>
 
+<script>
+// ============================================================
+// CARDIO AI — AUTH GATE (self-contained login for the platform)
+// Protects the platform; obtains the JWT that every /api/* call needs.
+// Token is stored as localStorage "cai_token" (read by apiFetch()).
+// Supports: local email/password (/auth/login) + Google OAuth (/auth/google)
+// ============================================================
+(function () {
+  "use strict";
+
+  function parseJwt(t) {
+    try { return JSON.parse(atob(t.split(".")[1])); } catch (e) { return null; }
+  }
+  function tokenValid() {
+    var t = "";
+    try { t = localStorage.getItem("cai_token") || ""; } catch (e) {}
+    if (!t) return false;
+    var p = parseJwt(t);
+    if (!p || !p.exp) return false;
+    return p.exp * 1000 > Date.now();
+  }
+  function storeToken(t) {
+    try { localStorage.setItem("cai_token", t); } catch (e) {}
+  }
+  function clearToken() {
+    try { localStorage.removeItem("cai_token"); } catch (e) {}
+  }
+
+  // Expose logout for the platform UI (nav can call window.caiLogout())
+  window.caiLogout = function () {
+    fetch("/auth/logout", { method: "POST", credentials: "include" })
+      .catch(function () {})
+      .then(function () { clearToken(); window.location.replace("/"); });
+  };
+
+  // ── Handle Google OAuth redirect: /?auth=success | /?auth=fail ──
+  function handleOAuthReturn(cb) {
+    var params = new URLSearchParams(window.location.search);
+    var status = params.get("auth");
+    if (status === "success") {
+      // Cookie is already set by the server; exchange it for a token.
+      fetch("/auth/me", { credentials: "include" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data || !data.user) throw new Error("Session not established");
+          return fetch("/auth/refresh", { method: "POST", credentials: "include" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (tok) {
+              if (tok && tok.token) storeToken(tok.token);
+              // Clean the URL, then reload so the platform boots authenticated.
+              window.history.replaceState({}, "", window.location.pathname);
+              window.location.reload();
+            });
+        })
+        .catch(function () {
+          window.history.replaceState({}, "", window.location.pathname);
+          cb(false, "Google sign-in did not complete. Please try again.");
+        });
+      return true; // handling in progress
+    }
+    if (status === "fail") {
+      var reason = params.get("reason") || "";
+      window.history.replaceState({}, "", window.location.pathname);
+      cb(false, "Google sign-in failed" + (reason ? " (" + decodeURIComponent(reason) + ")" : "") + ".");
+      return false;
+    }
+    return null; // no OAuth return present
+  }
+
+  // ── Login overlay UI ──────────────────────────────────────────
+  function buildOverlay() {
+    var wrap = document.createElement("div");
+    wrap.id = "cai-auth-gate";
+    wrap.setAttribute("style",
+      "position:fixed;inset:0;z-index:99999;background:radial-gradient(1200px 600px at 50% -10%,#12243a,#08131f 60%);" +
+      "display:flex;align-items:center;justify-content:center;font-family:'DM Sans',system-ui,sans-serif;");
+    wrap.innerHTML =
+      '<div style="width:360px;max-width:92vw;background:#0d1c2e;border:1px solid #1c3554;border-radius:16px;padding:28px 26px;box-shadow:0 24px 60px rgba(0,0,0,.5)">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
+          '<div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#0d9488,#1565C0);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-family:Syne,sans-serif">C</div>' +
+          '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:17px;color:#e8f0fb">Cardio AI Ghana</div>' +
+        '</div>' +
+        '<div style="font-size:12.5px;color:#64748b;margin:0 0 18px 44px">Digital Health Platform — sign in to continue</div>' +
+        '<label style="display:block;font-size:11px;font-weight:700;color:#93a4bd;margin-bottom:5px">EMAIL</label>' +
+        '<input id="cai-email" type="email" autocomplete="username" placeholder="doctor@kbu.cardioai.gh" ' +
+          'style="width:100%;background:#08131f;border:1px solid #1c3554;border-radius:9px;padding:10px 12px;color:#e8f0fb;font-size:13.5px;margin-bottom:12px;outline:none">' +
+        '<label style="display:block;font-size:11px;font-weight:700;color:#93a4bd;margin-bottom:5px">PASSWORD</label>' +
+        '<input id="cai-pass" type="password" autocomplete="current-password" placeholder="••••••••" ' +
+          'style="width:100%;background:#08131f;border:1px solid #1c3554;border-radius:9px;padding:10px 12px;color:#e8f0fb;font-size:13.5px;margin-bottom:8px;outline:none">' +
+        '<div id="cai-auth-msg" style="min-height:16px;font-size:12px;color:#fca5a5;margin-bottom:8px"></div>' +
+        '<button id="cai-login-btn" ' +
+          'style="width:100%;background:linear-gradient(135deg,#0d9488,#1565C0);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13.5px;font-weight:700;cursor:pointer">Sign in</button>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:#3a4c66;font-size:11px">' +
+          '<div style="flex:1;height:1px;background:#1c3554"></div>OR<div style="flex:1;height:1px;background:#1c3554"></div></div>' +
+        '<button id="cai-google-btn" ' +
+          'style="width:100%;background:#fff;color:#1f2937;border:none;border-radius:9px;padding:10px;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px">' +
+          '<svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
+          'Continue with Google</button>' +
+      '</div>';
+    return wrap;
+  }
+
+  function showOverlay(initialMsg) {
+    if (document.getElementById("cai-auth-gate")) return;
+    var overlay = buildOverlay();
+    document.body.appendChild(overlay);
+    var emailEl = document.getElementById("cai-email");
+    var passEl  = document.getElementById("cai-pass");
+    var msgEl   = document.getElementById("cai-auth-msg");
+    var loginBtn  = document.getElementById("cai-login-btn");
+    var googleBtn = document.getElementById("cai-google-btn");
+    if (initialMsg) msgEl.textContent = initialMsg;
+
+    function setMsg(t, ok) { msgEl.style.color = ok ? "#4ade80" : "#fca5a5"; msgEl.textContent = t || ""; }
+
+    function doLogin() {
+      var email = (emailEl.value || "").trim();
+      var pass  = passEl.value || "";
+      if (!email || !pass) { setMsg("Enter your email and password."); return; }
+      loginBtn.disabled = true; loginBtn.textContent = "Signing in…"; setMsg("");
+      fetch("/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, password: pass })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok || !res.d.token) throw new Error((res.d && res.d.error) || "Invalid email or password");
+          storeToken(res.d.token);
+          window.location.reload();
+        })
+        .catch(function (e) {
+          loginBtn.disabled = false; loginBtn.textContent = "Sign in";
+          setMsg(e.message || "Sign-in failed.");
+        });
+    }
+
+    loginBtn.addEventListener("click", doLogin);
+    passEl.addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+    emailEl.addEventListener("keydown", function (e) { if (e.key === "Enter") passEl.focus(); });
+    googleBtn.addEventListener("click", function () {
+      googleBtn.disabled = true; googleBtn.textContent = "Redirecting…";
+      window.location.href = "/auth/google";
+    });
+    setTimeout(function () { emailEl.focus(); }, 40);
+  }
+
+  // ── Boot: decide gate vs pass-through ─────────────────────────
+  var pending = handleOAuthReturn(function (ok, msg) {
+    // OAuth failed/again: show overlay with message once DOM is ready.
+    if (document.body) showOverlay(msg);
+    else document.addEventListener("DOMContentLoaded", function () { showOverlay(msg); });
+  });
+
+  if (pending === true) {
+    // OAuth success handling in progress (will reload); block the UI meanwhile.
+    document.documentElement.setAttribute("data-cai-authing", "1");
+    return;
+  }
+
+  if (!tokenValid()) {
+    if (document.body) showOverlay("");
+    else document.addEventListener("DOMContentLoaded", function () { showOverlay(""); });
+  }
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 
@@ -14070,11 +14237,8 @@ function buildClinicalAssistant(){
     var st2=document.getElementById("ca-status");if(st2)st2.textContent="Thinking\u2026";
     caTyping(true);
 
-    // Smart URL: use relative /api/chat if on Vercel, else absolute URL
-    var VERCEL="https://ai-clinical-assistant.vercel.app";
-    var apiUrl=(window.location.hostname==="ai-clinical-assistant.vercel.app")
-      ? "/api/chat"
-      : VERCEL+"/api/chat";
+    // Same-origin Cardio AI backend proxy (Express /api/chat → Anthropic)
+    var apiUrl="/api/chat";
 
     var payload=JSON.stringify({
       model:"claude-haiku-4-5-20251001",
@@ -14097,7 +14261,7 @@ function buildClinicalAssistant(){
       caBusy=false;if(sb3)sb3.disabled=false;if(st2)st2.textContent="Error";
       var full=msg;
       if(showLink){
-        full+="\n\n**This platform must be opened from:**\nhttps://ai-clinical-assistant.vercel.app/platform.html\n\nClick the link above \u2014 the Clinical AI works there.";
+        full+="\n\nThe Clinical AI could not reach the Cardio AI server. Check that you are signed in and that the server is running with a valid ANTHROPIC_API_KEY.";
       }
       caAddMsg("ai",full,true);
     }
@@ -14131,9 +14295,14 @@ function buildClinicalAssistant(){
     }
 
     function caDoFetch(){
+      var caTok="";try{caTok=localStorage.getItem("cai_token")||"";}catch(e){}
       fetch(apiUrl,{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
+        credentials:"include",
+        headers:Object.assign(
+          {"Content-Type":"application/json"},
+          caTok?{"Authorization":"Bearer "+caTok}:{}
+        ),
         body:payload
       })
       .then(function(res){
@@ -14153,8 +14322,8 @@ function buildClinicalAssistant(){
             onError("Rate limit (429) — "+caMaxRetries+" retries exhausted.\n\n"+
               "**Solutions:**\n"+
               "1. Wait 60 seconds and try again.\n"+
-              "2. Open the platform at https://ai-clinical-assistant.vercel.app/platform.html\n"+
-              "3. Reduce the number of requests per minute.",false);
+              "2. Reduce the number of requests per minute.\n"+
+              "3. Check the ANTHROPIC_API_KEY quota on the server.",false);
           }
           return;
         }
@@ -14205,7 +14374,7 @@ function buildClinicalAssistant(){
     caDoFetch();
   }
   function caClear(){var box=document.getElementById("ca-msgbox");if(box)box.innerHTML="";caLog=[];caWelcome();var st3=document.getElementById("ca-status");if(st3)st3.textContent="Ready";}
-  function caWelcome(){caAddMsg("ai","**Cardio AI Clinical Assistant** — Claude Haiku · Streaming\n\n⚠️ **Open this platform from:**\nhttps://ai-clinical-assistant.vercel.app/platform.html\n\nIf you are already on that URL the Clinical AI is ready. Ask any clinical, regulatory or compliance question.\n\nKnowledge base: Ghana STG 2023 · WHO · ACC/AHA · ESC · HIPAA · GDPR · SOC2 · FDA · EMA · MHRA · FDA Ghana");}
+  function caWelcome(){caAddMsg("ai","**Cardio AI Clinical Assistant** — Claude Haiku · Streaming\n\nAsk any clinical, regulatory or compliance question.\n\nKnowledge base: Ghana STG 2023 · WHO · ACC/AHA · ESC · HIPAA · GDPR · SOC2 · FDA · EMA · MHRA · FDA Ghana");}
   setTimeout(function(){
     var t3=document.getElementById("ca-ta");var s3=document.getElementById("ca-send");
     if(t3){
