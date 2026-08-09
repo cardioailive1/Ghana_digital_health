@@ -263,6 +263,26 @@ model SyncCursor {
   @@map("sync_cursors")
 }
 
+model Compound {
+  id             String    @id @default(uuid())
+  facilityId     String?
+  name           String
+  district       String
+  region         String?
+  worker         String?                           // assigned CHW
+  gps            String?                           // GhanaPostGPS / lat,lng
+  population     Int       @default(0)             // catchment population
+  status         String    @default("offline")     // online | offline
+  deviceType     String?   @default("CHPS-Hub v2")
+  lastSyncAt     DateTime?
+  pendingRecords Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([district])
+  @@map("compounds")
+}
+
 model User {
   id           String    @id @default(uuid())
   email        String    @unique

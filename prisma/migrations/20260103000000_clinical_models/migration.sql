@@ -199,3 +199,23 @@ CREATE TABLE "allergy_intolerances" (
   CONSTRAINT "allergy_intolerances_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX "allergy_intolerances_patientId_idx" ON "allergy_intolerances"("patientId");
+
+-- CHPS compound registration
+CREATE TABLE "compounds" (
+  "id" TEXT NOT NULL,
+  "facilityId" TEXT,
+  "name" TEXT NOT NULL,
+  "district" TEXT NOT NULL,
+  "region" TEXT,
+  "worker" TEXT,
+  "gps" TEXT,
+  "population" INTEGER NOT NULL DEFAULT 0,
+  "status" TEXT NOT NULL DEFAULT 'offline',
+  "deviceType" TEXT DEFAULT 'CHPS-Hub v2',
+  "lastSyncAt" TIMESTAMP(3),
+  "pendingRecords" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "compounds_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX "compounds_district_idx" ON "compounds"("district");

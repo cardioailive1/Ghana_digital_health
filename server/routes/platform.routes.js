@@ -11,6 +11,7 @@ import { requirePermission, PERMISSIONS } from "../rbac.js";
 import { requirePHI, facilityGuard } from "../../middleware/phiGuard.js";
 import { auditLog } from "../logger.js";
 import { FORMULARY, FORMULARY_META } from "../data/formulary.js";
+import { applySyncBatch } from "../chps/sync.js";
 
 const router = Router();
 
@@ -234,7 +235,35 @@ router.get("/iomt/news2-alerts", async (req, res) => res.json({ data: [], meta: 
 
 // ── CHPS ──────────────────────────────────────────────────────
 router.get("/chps/compounds", requirePermission(PERMISSIONS.CHPS_ACCESS), async (req, res) => {
-  res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "Compounds register on first CHPS-Hub sync" });
+  try {
+    const rows = await prisma.compound.findMany({ where: facFilter(req), orderBy: { createdAt: "desc" } });
+    // shape for the dashboard UI
+    const data = rows.map((cp) => ({
+      id: cp.id, name: cp.name, district: cp.district, region: cp.region || "—",
+      worker: cp.worker || "Unassigned", gps: cp.gps || "—", population: cp.population,
+      status: cp.status, patientsToday: 0, alertsToday: 0, pendingRecords: cp.pendingRecords,
+      battery: 100, signal: cp.status === "online" ? "2G EDGE" : "—",
+      lastSync: cp.lastSyncAt ? new Date(cp.lastSyncAt).toLocaleString("en-GB") : "never",
+      syncRate: cp.status === "online" ? 100 : 0, device: cp.deviceType || "CHPS-Hub v2", tablet: "Solar kit v2",
+    }));
+    res.json({ data, meta: meta(req.user.facilityId, data.length) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+router.post("/chps/compounds", requirePermission(PERMISSIONS.CHPS_ACCESS), async (req, res) => {
+  const b = req.body || {};
+  if (!b.name || !b.district) return res.status(400).json({ error: "name and district are required" });
+  try {
+    const cp = await prisma.compound.create({
+      data: {
+        facilityId: req.user.facilityId || null,
+        name: b.name, district: b.district, region: b.region || null,
+        worker: b.worker || null, gps: b.gps || null, population: Number(b.population) || 0,
+        deviceType: b.device || b.deviceType || "CHPS-Hub v2", status: "offline",
+      },
+    });
+    auditLog("CHPS_COMPOUND_REGISTER", req.user.sub, req.user.facilityId, "chps", cp.id, cp.name);
+    res.status(201).json({ data: cp });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 router.get("/chps/register",  requirePermission(PERMISSIONS.CHPS_ACCESS), async (req, res) => {
   res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "Field register entries sync from CHPS-Hub" });
@@ -249,13 +278,28 @@ router.get("/chps/synclog",   requirePermission(PERMISSIONS.CHPS_ACCESS), async 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// CHPS: Receive bundle push from CHPS-Hub v2
+// CHPS: receive a bundle push from a CHPS-Hub v2 device and PERSIST it via the
+// real offline-sync engine (conflict resolution), then update the compound state.
 router.post("/chps/sync", async (req, res) => {
   const { compoundId, records, deviceId } = req.body || {};
   if (!compoundId || !records) return res.status(400).json({ error: "compoundId and records required" });
-  auditLog("CHPS_SYNC", req.user.sub, req.user.facilityId, "chps", compoundId, `${records.length} records`);
-  // Records would be processed and stored in dedicated tables in full implementation
-  res.json({ data: { received: records.length, compoundId }, meta: meta(req.user.facilityId, 1) });
+  try {
+    // Map CHPS-Hub records -> sync-engine change set, then apply with conflict resolution.
+    const changes = (records || []).map((r) => ({
+      op: r.op || "upsert", resourceType: r.resourceType, clientId: r.clientId || r.id,
+      id: r.serverId || r.id, baseUpdatedAt: r.baseUpdatedAt, updatedAt: r.updatedAt, payload: r.payload || r,
+    }));
+    const result = await applySyncBatch(prisma, { deviceId: deviceId || compoundId, changes });
+    // update compound sync state
+    try {
+      await prisma.compound.update({
+        where: { id: compoundId },
+        data: { status: "online", lastSyncAt: new Date(), pendingRecords: 0 },
+      });
+    } catch (_) { /* compound may not exist yet */ }
+    auditLog("CHPS_SYNC", req.user?.sub, req.user?.facilityId, "chps", compoundId, `${records.length} records, ${result.conflicts.length} conflicts`);
+    res.json({ data: { received: records.length, applied: result.applied.length, conflicts: result.conflicts, compoundId }, meta: meta(req.user?.facilityId, 1) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Scan / Imaging ────────────────────────────────────────────

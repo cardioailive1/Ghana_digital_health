@@ -12828,10 +12828,58 @@ function cpStatusDot(status) {
 }
 
 // ── CHPS DASHBOARD ────────────────────────────────────────────
+// Register a CHPS compound: adds to the session network AND best-effort persists
+// (POST /chps/compounds). Works front-end-only; persists server-side when deployed.
+function registerCompound(data){
+  if(!data.name || !data.district){ toast('Compound name and district are required','info'); return null; }
+  var cp = {
+    id: 'CMP-'+Date.now(),
+    name: data.name, district: data.district, region: data.region||'—',
+    worker: data.worker||'Unassigned', gps: data.gps||'—', population: Number(data.population)||0,
+    status: 'offline', patientsToday:0, alertsToday:0, pendingRecords:0,
+    battery:100, signal:'—', lastSync:'never', syncRate:0,
+    device: data.device||'CHPS-Hub v2', tablet: data.tablet||'Solar kit v2'
+  };
+  CHPS_COMPOUNDS.unshift(cp);
+  try { apiFetch('/chps/compounds',{method:'POST',body:JSON.stringify(cp)}).then(function(r){return r.json();}).then(function(){}).catch(function(){}); } catch(e){}
+  return cp;
+}
+
+// Registration form card (always shown on the dashboard).
+function chpsRegisterForm(c){
+  var card = el('div',{cls:'cp-card',style:{marginBottom:'1.25rem'}});
+  card.appendChild(el('div',{style:{fontWeight:'700',color:'#e2e8f0',fontSize:'.9rem',marginBottom:'.6rem'}},'Register CHPS Compound'));
+  card.appendChild(el('div',{style:{fontSize:'.72rem',color:'#64748b',marginBottom:'.7rem'}},'District Health Team registers each compound. It then syncs from its CHPS-Hub tablet.'));
+  var grid = el('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'.6rem',marginBottom:'.7rem'}});
+  function fld(id,label,ph){ var w=el('div'); w.appendChild(el('label',{cls:'lbl'},label)); w.appendChild(el('input',{cls:'inp',attr:{id:id,placeholder:ph||''}})); return w; }
+  grid.appendChild(fld('cmp-name','Compound name','e.g. Sakumono CHPS'));
+  grid.appendChild(fld('cmp-district','District','e.g. Tema West'));
+  grid.appendChild(fld('cmp-region','Region','e.g. Greater Accra'));
+  grid.appendChild(fld('cmp-worker','CHPS Worker (CHW)','e.g. Grace Mensah'));
+  grid.appendChild(fld('cmp-gps','GhanaPostGPS / GPS','e.g. GA-123-4567'));
+  grid.appendChild(fld('cmp-pop','Catchment population','e.g. 1850'));
+  card.appendChild(grid);
+  var b = btn('Register Compound','btn-j',function(){
+    var cp = registerCompound({
+      name:(document.getElementById('cmp-name')||{}).value,
+      district:(document.getElementById('cmp-district')||{}).value,
+      region:(document.getElementById('cmp-region')||{}).value,
+      worker:(document.getElementById('cmp-worker')||{}).value,
+      gps:(document.getElementById('cmp-gps')||{}).value,
+      population:(document.getElementById('cmp-pop')||{}).value
+    });
+    if(cp){ toast('Compound "'+cp.name+'" registered — awaiting first CHPS-Hub sync','success'); clr(c); chpsDashboard(c); }
+  });
+  b.style.width='auto'; card.appendChild(b);
+  return card;
+}
+
 function chpsDashboard(c) {
+  if (!CHPS_COMPOUNDS.__pulled) { CHPS_COMPOUNDS.__pulled = true; loadCHPSCompounds(function(){ if(CHPS_COMPOUNDS.length){ clr(c); chpsDashboard(c); } }); }
+  // Registration form is always available
+  c.appendChild(chpsRegisterForm(c));
   if (!CHPS_COMPOUNDS.length) {
-    loadCHPSCompounds(function() { if(CHPS_COMPOUNDS.length) chpsDashboard(c); });
-    c.innerHTML = emptyState("No CHPS compounds registered","Compounds appear here once added by the District Health Team","Refresh",function(){loadCHPSCompounds(function(){chpsDashboard(c);});});
+    c.appendChild(el('div',{style:{color:'#64748b',fontSize:'12px',padding:'1rem 0',textAlign:'center'}},'No compounds registered yet — use the form above to add one.'));
     return;
   }
   // KPI row
