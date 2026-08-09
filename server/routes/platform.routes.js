@@ -137,7 +137,39 @@ router.get("/medcrm/agentlog",  async (req, res) => {
 });
 
 // ── Lab ────────────────────────────────────────────────────────
-router.get("/lab/orders",    async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "Lab orders from LIS integration" }));
+// In-memory lab-order store (per-process). Swap for a LabOrder Prisma model when ready.
+const LAB_ORDERS = [];
+router.get("/lab/orders",    async (req, res) => res.json({ data: LAB_ORDERS.filter(o => !req.user.facilityId || o.facilityId === req.user.facilityId), meta: meta(req.user.facilityId, LAB_ORDERS.length) }));
+router.post("/lab/orders", async (req, res) => {
+  const b = req.body || {};
+  const tests = Array.isArray(b.tests) ? b.tests : [];
+  const order = {
+    id: b.ref || ("LAB-" + Date.now()),
+    facilityId: req.user.facilityId || null,
+    patientId: b.patientId || null,
+    priority: b.priority || "Routine",
+    indication: b.indication || null,
+    tests,
+    status: "Ordered",
+    orderedBy: req.user?.sub || null,
+    ordered: new Date().toISOString(),
+    // FHIR ServiceRequest (laboratory order), one code per requested test (LOINC)
+    serviceRequest: {
+      resourceType: "ServiceRequest",
+      status: "active",
+      intent: "order",
+      priority: (b.priority || "routine").toLowerCase().includes("stat") ? "stat" : (b.priority || "routine").toLowerCase(),
+      category: [{ coding: [{ system: "http://snomed.info/sct", code: "108252007", display: "Laboratory procedure" }] }],
+      code: { coding: tests.filter(t => t.code).map(t => ({ system: "http://loinc.org", code: t.code, display: t.name })), text: tests.map(t => t.name).join(", ") },
+      subject: b.patientId ? { reference: "Patient/" + b.patientId } : undefined,
+      reasonCode: b.indication ? [{ text: b.indication }] : undefined,
+      authoredOn: new Date().toISOString(),
+    },
+  };
+  LAB_ORDERS.unshift(order);
+  try { auditLog("LAB_ORDER_CREATE", req.user?.sub, req.user?.facilityId, "lab", order.id, "created"); } catch (_) {}
+  res.status(201).json({ data: order });
+});
 router.get("/lab/results",   async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "Results from LIS/LOINC integration" }));
 router.get("/lab/genexpert", async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "GeneXpert results from device integration" }));
 router.get("/lab/critical",  async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "Critical values from LIS real-time feed" }));

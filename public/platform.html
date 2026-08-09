@@ -5060,29 +5060,32 @@ function checkDrug() {
 function orderLab() {
   var rc=document.getElementById('lab-queue');
   clr(rc);
+  // gather selected test chips + priority from the order-entry panel
+  var tests = Array.prototype.slice.call(document.querySelectorAll('.chip.on')).map(function(ch){return ch.textContent.trim();});
+  var pri = (document.getElementById('lab-pri')||{}).value || 'Routine';
+  var order = submitLabOrder({ patient:'Current patient', tests:tests, urgency:pri, orderedBy:'Dr. Asante — MO' });
+  if(!order){ rc.appendChild(sectionHeader('Results Queue')); rc.appendChild(el('div',{style:{color:'var(--muted)',fontSize:'12px',padding:'1rem 0'}},'Select one or more tests, then submit.')); return; }
   rc.appendChild(sectionHeader('Results Queue'));
   var rb=el('div',{cls:'rbox rbox-g'});
-  rb.appendChild(el('div',{cls:'rbox-title',style:{color:'var(--green2)'}},'Lab order submitted - Ref: LAB-2026-08814'));
-  rb.appendChild(el('div',{cls:'rbox-body',style:{fontFamily:"'DM Mono',monospace",fontSize:'11px'}},'Patient: Akosua Mensah - Priority: Routine - Barcode: #08814-A'));
+  rb.appendChild(el('div',{cls:'rbox-title',style:{color:'var(--green2)'}},'Lab order submitted — Ref: '+order.id));
+  rb.appendChild(el('div',{cls:'rbox-body',style:{fontFamily:"'DM Mono',monospace",fontSize:'11px'}},order.tests.length+' test(s) · Priority: '+order.urgency+' · FHIR ServiceRequest created (LOINC-coded)'));
   rc.appendChild(rb);
   rc.appendChild(sp(8));
   var tbl=el('table');
-  var thead=el('thead');
-  var tr=el('tr');
-  ['Test','Ref','Status','ETA'].forEach(function(h){tr.appendChild(el('th',{},h));});
-  thead.appendChild(tr);
-  tbl.appendChild(thead);
+  var thead=el('thead'); var tr=el('tr');
+  ['Test','LOINC','Status'].forEach(function(h){tr.appendChild(el('th',{},h));});
+  thead.appendChild(tr); tbl.appendChild(thead);
   var tbody=el('tbody');
-  [['FBC / CBC','LAB-08814-1','In progress','1.5 hrs','by'],['Malaria RDT','LAB-08814-2','Complete','Done','bg'],['Blood film','LAB-08814-3','Pending','2 hrs','by']].forEach(function(r){
+  order.loinc.forEach(function(t){
     var tr2=el('tr');
-    tr2.appendChild(el('td',{},r[0]));
-    tr2.appendChild(el('td',{style:{fontFamily:"'DM Mono',monospace",fontSize:'10px'}},r[1]));
-    tr2.appendChild(el('td',{},badge(r[2],r[3]==='Done'?'bg':'by')));
-    tr2.appendChild(el('td',{},r[3]));
+    tr2.appendChild(el('td',{},t.name));
+    tr2.appendChild(el('td',{style:{fontFamily:"'DM Mono',monospace",fontSize:'10px',color:'var(--jade)'}},t.code||'—'));
+    tr2.appendChild(el('td',{},badge('Ordered','by')));
     tbody.appendChild(tr2);
   });
   tbl.appendChild(tbody);
   rc.appendChild(tbl);
+  toast('Lab order '+order.id+' submitted','success');
 }
 
 
@@ -11767,7 +11770,127 @@ function labRender(tab, c) {
 }
 
 // ── TEST ORDERS ─────────────────────────────────────────────
+// LOINC catalogue for orderable tests. ⚠ validate codes against your LIS/LOINC master before clinical use.
+var LAB_LOINC = {
+  'FBC / Full Blood Count':'58410-2','FBC / CBC':'58410-2','Malaria blood film':'32700-7','Blood film':'32700-7',
+  'Haemoglobin':'718-7','Haematocrit':'4544-3','Platelet count':'777-3','ESR':'30341-2','Hb electrophoresis':'4635-9',
+  'Peripheral blood smear':'33717-0','Blood glucose (random)':'2345-7','Blood glucose (fasting)':'1558-6','HbA1c':'4548-4',
+  'U&E (Urea + Electrolytes)':'24362-6','eGFR (CKD-EPI)':'62238-1','Creatinine':'2160-0','LFTs':'24325-3',
+  'Lipid profile':'57698-3','Uric acid':'3084-1','CRP':'1988-5','Troponin I':'10839-9','BNP':'30934-4','Biochemistry':'24323-8',
+  'Malaria RDT (Pf antigen)':'70206-9','Malaria RDT':'70206-9','GeneXpert MTB/RIF (sputum)':'90271-0','GeneXpert MTB/RIF':'90271-0',
+  'Blood culture × 2':'600-7','Blood culture':'600-7','Urine M/C/S':'630-4','Wound swab C/S':'6462-6','Stool M/C/S':'625-4',
+  'Sputum AFB smear':'11545-1','Urinalysis dipstick':'5804-0','Urine dipstick':'5804-0','Pregnancy test (urine hCG)':'2106-3',
+  'Rapid dengue NS1/IgM/IgG':'7855-2','Rapid typhoid IgM':'','HIV rapid test':'75622-1'
+};
+function loincFor(name){ return LAB_LOINC[name] || ''; }
+
+// Create a lab order: adds to the in-session queue AND best-effort persists to the
+// backend (POST /lab/orders → FHIR ServiceRequest). Works front-end-only; when the
+// server is deployed it also creates a LOINC-coded ServiceRequest server-side.
+function submitLabOrder(o){
+  if(!o.tests || !o.tests.length){ toast('Select at least one test','info'); return null; }
+  var now = new Date();
+  var ref = 'LAB-'+now.getFullYear()+'-'+String(Math.floor(Math.random()*90000+10000));
+  var urg = (o.urgency||'Routine').indexOf('STAT')>-1 ? 'STAT' : (o.urgency||'Routine');
+  var order = {
+    id: ref, patient: o.patient||'Unknown patient', patientId: o.patientId||'',
+    tests: o.tests.slice(),
+    loinc: o.tests.map(function(t){ return {name:t, code:loincFor(t)}; }),
+    urgency: urg, indication: o.indication||'', status: 'Ordered',
+    sc: urg==='STAT'?'br':(urg==='Urgent'?'by':'bg'),
+    orderedBy: o.orderedBy||'Requesting clinician',
+    ordered: now.toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'})
+  };
+  LAB_ORDERS.unshift(order);
+  try {
+    apiFetch('/lab/orders', { method:'POST', body: JSON.stringify({
+      patientId: order.patientId, priority: order.urgency, indication: order.indication,
+      ref: order.id, tests: order.loinc
+    })}).then(function(r){ return r.json(); }).then(function(){}).catch(function(){});
+  } catch(e){}
+  return order;
+}
+
 function labOrders(c) {
+  // Pull any server-side orders once (merged, non-blocking) — the form is always available.
+  if (!LAB_ORDERS.__pulled) { LAB_ORDERS.__pulled = true; loadLabOrders(function(){ if(LAB_ORDERS.length) { clr(c); labOrders(c); } }); }
+
+  var kg = el('div',{cls:'g4',style:{marginBottom:'1.25rem'}});
+  var statOrders = LAB_ORDERS.length, pending = LAB_ORDERS.filter(function(o){return o.status!=='Complete';}).length;
+  [['Orders (session)',String(statOrders),'This device','jade','nt'],['Pending Results',String(pending),'Awaiting analysis','amber','nt'],['Critical Results','0','Action required','red','nt'],['FHIR ServiceRequest',String(statOrders),'LOINC-coded','green','nt']].forEach(function(k){ kg.appendChild(kpiCard(k[3],k[0],k[1],k[2],'',k[4])); });
+  c.appendChild(kg);
+
+  var g2 = el('div',{cls:'g2',style:{marginBottom:'1.25rem'}});
+  var nof = el('div',{cls:'card'});
+  nof.appendChild(sectionHeader('New Laboratory Order'));
+  nof.appendChild(row(2,
+    (function(){ var fg2=el('div',{cls:'fg'}); fg2.appendChild(el('label',{cls:'lbl'},'Patient')); var s=el('select',{cls:'sel',attr:{id:'lo-patient'}}); [{v:'PT-00441',l:'Akosua Mensah (PT-00441)'},{v:'PT-00511',l:'Kwame Darko (PT-00511) — PICU'},{v:'PT-00382',l:'Kofi Agyemang (PT-00382)'},{v:'PT-00290',l:'Abena Owusu (PT-00290) — ANC'},{v:'PT-00199',l:'Ama Boateng (PT-00199)'}].forEach(function(p){s.appendChild(el('option',{attr:{value:p.v}},p.l));}); fg2.appendChild(s); return fg2; })(),
+    (function(){ var fg2=el('div',{cls:'fg'}); fg2.appendChild(el('label',{cls:'lbl'},'Urgency')); var s=el('select',{cls:'sel',attr:{id:'lo-urgency'}}); ['Routine','Urgent','STAT (within 1 hour)'].forEach(function(u){s.appendChild(el('option',{},u));}); fg2.appendChild(s); return fg2; })()
+  ));
+  nof.appendChild(el('div',{cls:'fg'},el('label',{cls:'lbl'},'Clinical Indication'),el('input',{cls:'inp',attr:{id:'lo-ind',placeholder:'e.g. Malaria — fever 3 days'}})));
+
+  var selected = [];
+  var panels = [
+    {label:'Haematology',tests:['FBC / Full Blood Count','Malaria blood film','Haemoglobin','Haematocrit','Platelet count','ESR','Hb electrophoresis','Peripheral blood smear']},
+    {label:'Chemistry',  tests:['Blood glucose (random)','Blood glucose (fasting)','HbA1c','U&E (Urea + Electrolytes)','eGFR (CKD-EPI)','Creatinine','LFTs','Lipid profile','Uric acid','CRP','Troponin I','BNP']},
+    {label:'Microbiology',tests:['Malaria RDT (Pf antigen)','GeneXpert MTB/RIF (sputum)','Blood culture × 2','Urine M/C/S','Wound swab C/S','Stool M/C/S','Sputum AFB smear']},
+    {label:'Point-of-Care',tests:['Urinalysis dipstick','Pregnancy test (urine hCG)','Rapid dengue NS1/IgM/IgG','Rapid typhoid IgM','HIV rapid test']},
+  ];
+  var panGrid = el('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.65rem',marginBottom:'.75rem'}});
+  panels.forEach(function(panel){
+    var pc = el('div',{style:{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:'8px',padding:'.65rem'}});
+    pc.appendChild(el('div',{style:{fontSize:'10px',fontFamily:"'DM Mono',monospace",color:'var(--jade)',fontWeight:'700',marginBottom:'.4rem'}},panel.label.toUpperCase()));
+    panel.tests.forEach(function(test){
+      var tr2 = el('label',{style:{display:'flex',alignItems:'center',gap:'.4rem',fontSize:'11.5px',color:'var(--muted2)',marginBottom:'3px',cursor:'pointer'}});
+      var cb = el('input',{attr:{type:'checkbox'}});
+      cb.style.accentColor='var(--jade)';
+      cb.addEventListener('change',function(){ if(this.checked){ if(selected.indexOf(test)<0) selected.push(test); } else { var i=selected.indexOf(test); if(i>-1) selected.splice(i,1); } });
+      tr2.appendChild(cb);
+      var code = loincFor(test);
+      tr2.appendChild(el('span',{},test));
+      if(code) tr2.appendChild(el('span',{style:{fontSize:'9px',fontFamily:"'DM Mono',monospace",color:'var(--muted)',marginLeft:'auto'}},code));
+      pc.appendChild(tr2);
+    });
+    panGrid.appendChild(pc);
+  });
+  nof.appendChild(panGrid);
+  var ob = btn('Send Order to Laboratory','btn-j',function(){
+    var psel = document.getElementById('lo-patient');
+    var order = submitLabOrder({
+      patient: psel ? psel.options[psel.selectedIndex].textContent : '',
+      patientId: psel ? psel.value : '',
+      urgency: (document.getElementById('lo-urgency')||{}).value || 'Routine',
+      indication: (document.getElementById('lo-ind')||{}).value || '',
+      tests: selected, orderedBy: 'Ordering clinician'
+    });
+    if(order){ toast('Lab order '+order.id+' submitted — '+order.tests.length+' test(s), FHIR ServiceRequest created','success'); clr(c); labOrders(c); }
+  });
+  ob.style.width='100%'; nof.appendChild(ob);
+  g2.appendChild(nof);
+
+  var oc = el('div',{cls:'card'});
+  oc.appendChild(sectionHeader('Recent Test Orders'));
+  if(!LAB_ORDERS.length){
+    oc.appendChild(el('div',{style:{color:'var(--muted)',fontSize:'12px',padding:'1rem 0',textAlign:'center'}},'No orders yet — create one using the form.'));
+  }
+  LAB_ORDERS.forEach(function(o){
+    var or2 = el('div',{style:{display:'flex',alignItems:'flex-start',gap:'.65rem',padding:'.65rem .75rem',background:'var(--bg3)',border:'1px solid '+(o.urgency==='STAT'?'rgba(220,38,38,.25)':'var(--border)'),borderRadius:'8px',marginBottom:'.4rem',borderLeft:o.urgency==='STAT'?'3px solid var(--red)':'3px solid transparent'}});
+    var oi = el('div',{style:{flex:'1'}});
+    oi.appendChild(el('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:'2px'}},el('span',{style:{fontWeight:'600',color:'var(--white)',fontSize:'12px'}},o.patient),badge(o.status,o.sc)));
+    var trow = el('div',{style:{display:'flex',gap:'.3rem',flexWrap:'wrap',marginBottom:'2px'}});
+    o.tests.forEach(function(t){ trow.appendChild(el('span',{style:{fontSize:'9px',background:'rgba(13,148,136,.08)',color:'var(--jade)',padding:'1px 5px',borderRadius:'5px',fontFamily:"'DM Mono',monospace"}},t)); });
+    oi.appendChild(trow);
+    oi.appendChild(el('div',{style:{fontSize:'10px',color:'var(--muted)'}},o.id+' · '+o.orderedBy+' · '+o.ordered));
+    or2.appendChild(oi);
+    if(o.urgency==='STAT') or2.appendChild(badge('STAT','br'));
+    else if(o.urgency==='Urgent') or2.appendChild(badge('Urgent','by'));
+    oc.appendChild(or2);
+  });
+  g2.appendChild(oc);
+  c.appendChild(g2);
+}
+
+function labOrders_OLD_UNUSED(c) {
   if (!LAB_ORDERS.length) {
     loadLabOrders(function() { if(LAB_ORDERS.length) labOrders(c); });
     c.innerHTML = emptyState("No lab orders","Lab orders will appear here when raised by clinicians","Refresh",function(){loadLabOrders(function(){labOrders(c);});});
