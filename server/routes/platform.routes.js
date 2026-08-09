@@ -10,6 +10,7 @@ import { authenticate } from "../auth.js";
 import { requirePermission, PERMISSIONS } from "../rbac.js";
 import { requirePHI, facilityGuard } from "../../middleware/phiGuard.js";
 import { auditLog } from "../logger.js";
+import { FORMULARY, FORMULARY_META } from "../data/formulary.js";
 
 const router = Router();
 
@@ -142,7 +143,7 @@ router.get("/lab/genexpert", async (req, res) => res.json({ data: [], meta: meta
 router.get("/lab/critical",  async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0), note: "Critical values from LIS real-time feed" }));
 
 // ── Pharmacy ──────────────────────────────────────────────────
-router.get("/pharmacy/drugs",         async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0) }));
+router.get("/pharmacy/drugs",         async (req, res) => res.json({ data: FORMULARY, meta: { ...meta(req.user.facilityId, FORMULARY.length), formulary: FORMULARY_META } }));
 router.get("/pharmacy/prescriptions", async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0) }));
 router.get("/pharmacy/queue",         async (req, res) => res.json({ data: [], meta: meta(req.user.facilityId, 0) }));
 
