@@ -232,6 +232,18 @@ docker compose -f docker-compose.yml -f docker-compose.gofr.yml up -d
 | Background scheduler (ADX + SLA) | `server/worker.js` | `cardio-ai-worker` (worker) | ADX 2-min, SLA 30-sec |
 | PostgreSQL | — | `cardio-ai-postgres` | managed |
 
+### Ports — what needs one and what doesn't
+
+- **FHIR R4 bridge — no dedicated port.** It's an Express router mounted at `/fhir/r4` inside the `web` service, served on the same HTTP port (`PORT`, 443 publicly). Deploy `server/` → it's live at `https://<app>/fhir/r4/metadata`. It serves PHI, so it sits behind HTTPS + auth (mounted after the auth middleware); expose it to external partners only through OpenHIM's `/fhir` channel.
+- **HL7 v2 MLLP — the only port to plan (TCP 2575).** MLLP is raw TCP, not HTTP, so it runs as its own `pserv` (`server/hl7-service.js`). `render.yaml` sets `HL7_MLLP_PORT=2575`, injects `DATABASE_URL`, and declares `HL7_TLS_KEY`/`HL7_TLS_CERT` (`sync:false`). The code starts **MLLP-over-TLS when both PEMs are present**, else plaintext with a warning.
+- **OpenHIE ports (8081/8082/8083/5000…)** belong to the *external* services on your VM; the bridge connects **out** to them via `SHR_BASE_URL`/`MPI_BASE_URL` — it opens no inbound port for them.
+
+**HL7 MLLP connectivity — read before enabling inbound HL7:**
+
+1. **TLS var format:** `HL7_TLS_KEY`/`HL7_TLS_CERT` are the **PEM contents as strings** (not file paths). When pasting multi-line PEMs into Render, confirm newlines survive (escape as `\n` if needed) and test the handshake.
+2. **Reachability:** a Render `pserv` is reachable **inside the Render network**, not the public internet. If your HL7 senders (GeneXpert, LIS, hospital edge boxes) are **external**, a plain `pserv` won't be reachable — Render doesn't expose arbitrary public TCP the way it does HTTP. Options: a **VPN / private link**, a small **TCP proxy on a VM**, or run the MLLP listener **on the same VM as `openhie-stack`**.
+3. **PHI safety:** never run MLLP plaintext over the public internet. Target pattern: devices → hospital network → **VPN/tunnel** → MLLP listener, with **TLS on**. The code supports the TLS half; the tunnel is infrastructure you provide.
+
 ## Environment variables (set in Render dashboard, per service)
 
 **Where set:** Render Dashboard → service → **Environment** (never commit real values; `.env.example` is a template only, `.env` is git-ignored). **Where the value comes from** is in the last column. All interoperability vars are **optional** — the code no-ops safely when they're unset, so login and the platform work without any of them.
